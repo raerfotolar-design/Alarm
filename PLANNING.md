@@ -158,15 +158,16 @@ Uygulama modüler bölüm (section) yapısında kurulacak — her özellik bağ�
 - [x] **For My Love** bölümü: anılar+fotoğraf galerisi, özel gün geri sayımı+bildirimi, bucket list — girişte ayrı PIN/biyometrik kilit (global kilitten bağımsız, her seferinde soruyor)
 - [x] **Ninni** bölümü: dosyadan çalma, döngü, uyku zamanlayıcısı, YouTube linki, Jarvis'ten `play_lullaby`/`stop_lullaby`
 - [x] Jarvis: ton ayarı (samimi/resmi/esprili), `remember_fact`/`recall_facts` hafıza, Şarkı editöründe kafiye bulucu + "devam ettir", kelime/karakter sayacı
+- [x] Uyku öncesi rutin checklist'i, rüya günlüğü, kafein/ekran süresi takibi (Uyku ekranına eklendi)
+- [x] Jarvis günlük brifing (Ana Sayfa'da buton) + günden güne önbelleklenen günlük motivasyon sözü
+- [x] Hikaye/şarkı/not versiyon geçmişi (son 20 sürüm, "bu sürüme dön")
+- [x] Hobi istatistikleri (izledim/izliyorum/listede sayıları, en yüksek puanlılar) + "🎲 Ne izlesem?" önerisi
+- [x] Alarm: kademeli ses artışı + bulmaca ile kapatma (foreground-only — uygulama açıkken/bildirime dokununca çalışır)
+- [x] Uygulama içi genel arama (Ana Sayfa'dan hikaye/şarkı/not/hobi'de birden arama)
+- [x] Kullanım istatistiği (Ayarlar'da "Kullanım Özeti" kartı)
 
-### v2 — henüz kodlanmadı (sıradaki)
+### v2 — henüz kodlanmadı
 
-- [ ] Uyku öncesi rutin checklist'i, rüya günlüğü, kafein/ekran süresi takibi, haftalık Jarvis raporu
-- [ ] Jarvis günlük brifing + günlük motivasyon sözü (otomatik/zamanlanmış)
-- [ ] Hikaye/şarkı versiyon geçmişi
-- [ ] İzleme istatistikleri, top-10, "ne izlesem" önerisi (Hobi verisinden türetilecek, henüz ayrı bir ekran yok)
-- [ ] Alarm: kademeli ses artışı + bulmaca ile kapatma (foreground-only olarak planlandı)
-- [ ] Uygulama içi genel arama (tüm bölümlerde)
-- [ ] Kullanım istatistiği/profil ekranı
+- [ ] Haftalık Jarvis raporu (otomatik/zamanlanmış özet — şu an sadece isteğe bağlı günlük brifing var)
 
 Kurulum ve kullanım detayları için bkz. **README.md**.

@@ -3,13 +3,16 @@ import { View, Switch, Image, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { File } from 'expo-file-system';
-import { Screen, Title, Subtitle, Card, BodyText, PrimaryButton, Field, Chip } from '../../components/ui';
+import { Screen, Title, Subtitle, Card, BodyText, PrimaryButton, Field, Chip, StatTile } from '../../components/ui';
 import { useAppTheme } from '../../theme/ThemeContext';
 import { getSettings, updateSettings } from '../../storage/settingsRepository';
 import { hashPin, isBiometricAvailable } from '../../services/lockService';
 import { isWakeWordSupported } from '../../services/wakeWordService';
 import { listSleepEntries } from '../../storage/sleepRepository';
 import { listStories, listSongs, listNotes } from '../../storage/creativeRepository';
+import { listAlarms } from '../../storage/alarmRepository';
+import { listMedia } from '../../storage/mediaRepository';
+import { computeSleepStats } from '../../services/stats';
 import { exportAllAsFile } from '../../services/exportService';
 import { formatMinutes } from '../../services/stats';
 import { ThemePreference, AppSettings } from '../../types';
@@ -30,6 +33,7 @@ export default function SettingsScreen() {
   const [customImage, setCustomImage] = useState<string | null>(null);
   const [defaultAlarmSound, setDefaultAlarmSound] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [usageStats, setUsageStats] = useState({ sleepEntries: 0, streakDays: 0, alarms: 0, creative: 0, media: 0 });
 
   useFocusEffect(
     useCallback(() => {
@@ -47,6 +51,23 @@ export default function SettingsScreen() {
         setCustomImage(settings.customAppImageUri);
         setDefaultAlarmSound(settings.defaultAlarmSoundUri);
         setBiometricAvailable(bioAvailable);
+
+        const [entries, alarms, stories, songs, notes, media] = await Promise.all([
+          listSleepEntries(),
+          listAlarms(),
+          listStories(),
+          listSongs(),
+          listNotes(),
+          listMedia(),
+        ]);
+        const stats = computeSleepStats(entries, settings.bedtimeGoalHour, settings.bedtimeGoalMinute);
+        setUsageStats({
+          sleepEntries: entries.length,
+          streakDays: stats.streakDays,
+          alarms: alarms.length,
+          creative: stories.length + songs.length + notes.length,
+          media: media.length,
+        });
       })();
     }, [])
   );
@@ -130,6 +151,19 @@ export default function SettingsScreen() {
   return (
     <Screen>
       <Title>Ayarlar</Title>
+
+      <Card>
+        <Subtitle style={{ marginBottom: 10 }}>Kullanım Özeti</Subtitle>
+        <View style={{ flexDirection: 'row', marginBottom: 10 }}>
+          <StatTile label="Uyku kaydı" value={`${usageStats.sleepEntries}`} />
+          <StatTile label="Streak" value={`${usageStats.streakDays} gün`} />
+          <StatTile label="Alarm" value={`${usageStats.alarms}`} />
+        </View>
+        <View style={{ flexDirection: 'row' }}>
+          <StatTile label="Yaratıcılık" value={`${usageStats.creative}`} />
+          <StatTile label="Hobi kaydı" value={`${usageStats.media}`} />
+        </View>
+      </Card>
 
       <Card>
         <Subtitle style={{ marginBottom: 10 }}>Uygulama Görseli</Subtitle>
