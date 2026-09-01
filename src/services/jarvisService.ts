@@ -147,6 +147,44 @@ export async function getRhymes(apiKey: string, word: string): Promise<string[]>
     .slice(0, 8);
 }
 
+/** One-off helper for Home's cached daily motivation line. */
+export async function getDailyMotivation(apiKey: string): Promise<string> {
+  if (!apiKey) return '';
+  const ai = new GoogleGenAI({ apiKey });
+  const response = await ai.models.generateContent({
+    model: MODEL,
+    contents: [
+      {
+        role: 'user',
+        parts: [{ text: 'Bugün için kısa (1 cümle), samimi ve motive edici bir Türkçe söz yaz. Sadece sözü yaz, tırnak veya açıklama ekleme.' }],
+      },
+    ],
+  });
+  return (response.text ?? '').trim();
+}
+
+/** One-off helper for Home's "Bugünkü Brifing" button. */
+export async function getDailyBriefing(apiKey: string, context: string): Promise<string> {
+  if (!apiKey) return 'Gemini API anahtarı girilmemiş.';
+  const ai = new GoogleGenAI({ apiKey });
+  const settings = await getSettings();
+  const response = await ai.models.generateContent({
+    model: MODEL,
+    contents: [
+      {
+        role: 'user',
+        parts: [
+          {
+            text: `Aşağıdaki bilgilere göre kullanıcıya kısa (3-4 cümle) bir günlük brifing ver — bugün dikkat etmesi gerekenleri özetle:\n\n${context}`,
+          },
+        ],
+      },
+    ],
+    config: { systemInstruction: buildSystemInstruction(settings.jarvisTone) },
+  });
+  return response.text ?? '';
+}
+
 /** One-off helper for the Stories/Songs editor's "devam ettir" button. */
 export async function continueWriting(apiKey: string, existingText: string, kind: 'story' | 'song'): Promise<string> {
   if (!apiKey) return '';

@@ -1,13 +1,16 @@
 import React, { useCallback, useState } from 'react';
-import { View, Pressable, Image } from 'react-native';
+import { View, Pressable, Image, ActivityIndicator } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Screen, Title, Subtitle, Card, BodyText, StatTile, Chip } from '../components/ui';
+import { Screen, Title, Subtitle, Card, BodyText, StatTile, Chip, PrimaryButton } from '../components/ui';
 import { useAppTheme } from '../theme/ThemeContext';
 import { listSleepEntries, getOpenSleepEntry, getActiveAwakeSession } from '../storage/sleepRepository';
+import { listAlarms } from '../storage/alarmRepository';
 import { computeSleepStats, formatMinutes } from '../services/stats';
 import { getSettings } from '../storage/settingsRepository';
 import { logMood } from '../storage/moodRepository';
+import { getJson, setJson, STORAGE_KEYS } from '../storage/storage';
+import { getDailyMotivation, getDailyBriefing } from '../services/jarvisService';
 import { MoodValue } from '../types';
 import type { HomeStackParamList } from '../navigation/RootNavigator';
 
@@ -21,6 +24,10 @@ export default function HomeScreen() {
   const [awake, setAwake] = useState(false);
   const [customImage, setCustomImage] = useState<string | null>(null);
   const [moodLogged, setMoodLogged] = useState(false);
+  const [apiKey, setApiKey] = useState('');
+  const [motivation, setMotivation] = useState('');
+  const [briefing, setBriefing] = useState('');
+  const [briefingLoading, setBriefingLoading] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -37,12 +44,40 @@ export default function HomeScreen() {
         setSleeping(!!openSleep);
         setAwake(!!activeAwake);
         setCustomImage(settings.customAppImageUri);
+        setApiKey(settings.geminiApiKey);
+
+        if (settings.geminiApiKey) {
+          const today = new Date().toDateString();
+          const cached = await getJson<{ date: string; text: string }>(STORAGE_KEYS.dailyMotivation, { date: '', text: '' });
+          if (cached.date === today && cached.text) {
+            setMotivation(cached.text);
+          } else {
+            const text = await getDailyMotivation(settings.geminiApiKey);
+            if (text) {
+              setMotivation(text);
+              await setJson(STORAGE_KEYS.dailyMotivation, { date: today, text });
+            }
+          }
+        }
       })();
       return () => {
         active = false;
       };
     }, [])
   );
+
+  async function handleBriefing() {
+    if (!apiKey) return;
+    setBriefingLoading(true);
+    const [alarms, settings] = await Promise.all([listAlarms(), getSettings()]);
+    const enabledAlarms = alarms.filter((a) => a.enabled);
+    const context = `Bugünkü aktif alarmlar: ${
+      enabledAlarms.length > 0 ? enabledAlarms.map((a) => `${String(a.hour).padStart(2, '0')}:${String(a.minute).padStart(2, '0')} (${a.label || 'Alarm'})`).join(', ') : 'yok'
+    }. Hedef yatma saati: ${String(settings.bedtimeGoalHour).padStart(2, '0')}:${String(settings.bedtimeGoalMinute).padStart(2, '0')}. Streak: ${stats.streakDays} gün.`;
+    const text = await getDailyBriefing(apiKey, context);
+    setBriefing(text);
+    setBriefingLoading(false);
+  }
 
   return (
     <Screen>
@@ -58,6 +93,12 @@ export default function HomeScreen() {
           <BodyText style={{ fontSize: 22 }}>⚙️</BodyText>
         </Pressable>
       </View>
+
+      {motivation ? (
+        <Card>
+          <BodyText style={{ fontStyle: 'italic', color: theme.colors.primary }}>💬 {motivation}</BodyText>
+        </Card>
+      ) : null}
 
       {sleeping ? (
         <Card style={{ backgroundColor: theme.colors.primary }}>
@@ -95,6 +136,18 @@ export default function HomeScreen() {
         </View>
         {moodLogged ? <BodyText style={{ color: theme.colors.textMuted, marginTop: 4 }}>Kaydedildi, efendim.</BodyText> : null}
       </Card>
+
+      {apiKey ? (
+        <Card>
+          <Subtitle style={{ marginBottom: 10 }}>Günlük Brifing</Subtitle>
+          {briefing ? <BodyText style={{ marginBottom: 10 }}>{briefing}</BodyText> : null}
+          {briefingLoading ? (
+            <ActivityIndicator color={theme.colors.primary} />
+          ) : (
+            <PrimaryButton title="📋 Bugünkü Brifingi Getir" variant="outline" onPress={handleBriefing} />
+          )}
+        </Card>
+      ) : null}
     </Screen>
   );
 }
