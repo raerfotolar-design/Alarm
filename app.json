@@ -1,0 +1,79 @@
+{
+  "expo": {
+    "name": "RAER Special App",
+    "slug": "raer-special-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.jpg",
+    "userInterfaceStyle": "automatic",
+    "scheme": "raerspecial",
+    "backgroundColor": "#0B0B10",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.raer.specialapp"
+    },
+    "android": {
+      "package": "com.raer.specialapp",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.jpg",
+        "backgroundColor": "#0B0B10"
+      },
+      "permissions": [
+        "RECORD_AUDIO",
+        "CAMERA",
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT",
+        "SCHEDULE_EXACT_ALARM",
+        "USE_EXACT_ALARM",
+        "POST_NOTIFICATIONS",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_MICROPHONE",
+        "WAKE_LOCK"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/icon.jpg"
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "RAER Special App, ne gördüğünü anlatabilmek için kameraya erişmek istiyor.",
+          "microphonePermission": "RAER Special App, sesli notların için mikrofona erişmek istiyor."
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "RAER Special App, sesli not kaydı ve Jarvis için mikrofona erişmek istiyor.",
+          "recordAudioAndroid": true
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.jpg",
+          "color": "#7C3AED"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "RAER Special App, uygulama görselini değiştirebilmen için galeriye erişmek istiyor."
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "RAER Special App, gizlilik kilidini açman için Face ID kullanmak istiyor."
+        }
+      ],
+      "./plugins/withPorcupineAssets.js"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": ""
+      }
+    }
+  }
+}

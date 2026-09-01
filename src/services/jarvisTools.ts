@@ -1,0 +1,202 @@
+import type { FunctionDeclaration } from '@google/genai/web';
+import { Type } from '@google/genai/web';
+import {
+  addManualSleepEntry,
+  startSleep,
+  finishSleep,
+  getOpenSleepEntry,
+  listSleepEntries,
+  startAwakeSession,
+} from '../storage/sleepRepository';
+import { computeSleepStats, formatMinutes } from './stats';
+import { getSettings } from '../storage/settingsRepository';
+import { saveAlarm } from '../storage/alarmRepository';
+import { scheduleAlarmNotifications } from './notifications';
+import { saveNote, saveSong, saveStory } from '../storage/creativeRepository';
+import { logMood } from '../storage/moodRepository';
+import { MoodValue } from '../types';
+
+export const jarvisFunctionDeclarations: FunctionDeclaration[] = [
+  {
+    name: 'get_sleep_stats',
+    description: "Kullanıcının uyku istatistiklerini (ortalama süre, düzen, streak) döndürür.",
+  },
+  {
+    name: 'log_sleep',
+    description: 'Geçmişe dönük bir uyku kaydı girer (yattığın ve kalktığın saat bilgisiyle).',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        sleepAtIso: { type: Type.STRING, description: 'Yatma zamanı, ISO 8601 formatında.' },
+        wakeAtIso: { type: Type.STRING, description: 'Uyanma zamanı, ISO 8601 formatında.' },
+        note: { type: Type.STRING, description: 'Opsiyonel not.' },
+      },
+      required: ['sleepAtIso', 'wakeAtIso'],
+    },
+  },
+  {
+    name: 'start_sleep_now',
+    description: 'Şu anı uykuya dalma zamanı olarak kaydeder (Uyku Modu başlatır).',
+  },
+  {
+    name: 'finish_sleep_now',
+    description: 'Açık olan uyku kaydını şu anki zamanla kapatır (uyandığını kaydeder).',
+  },
+  {
+    name: 'set_alarm',
+    description: 'Yeni bir alarm kurar.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        hour: { type: Type.NUMBER, description: '0-23 arası saat.' },
+        minute: { type: Type.NUMBER, description: '0-59 arası dakika.' },
+        label: { type: Type.STRING, description: 'Alarm etiketi.' },
+        days: {
+          type: Type.ARRAY,
+          items: { type: Type.NUMBER },
+          description: '0=Pazar..6=Cumartesi. Boş bırakılırsa tek seferlik alarm olur.',
+        },
+      },
+      required: ['hour', 'minute'],
+    },
+  },
+  {
+    name: 'start_awake_session',
+    description: 'Uyanık kalma modunu başlatır; hedef saate kadar hatırlatmalar gönderir.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        targetTimeIso: { type: Type.STRING, description: 'Hedef uyanık kalma saati, ISO 8601.' },
+        reason: { type: Type.STRING, description: 'Neden uyanık kalınması gerektiği.' },
+        reminderIntervalMinutes: { type: Type.NUMBER, description: 'Kaç dakikada bir hatırlatma gönderilsin.' },
+      },
+      required: ['targetTimeIso', 'reason'],
+    },
+  },
+  {
+    name: 'save_note',
+    description: 'Notlar bölümüne yeni bir not kaydeder.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        title: { type: Type.STRING },
+        content: { type: Type.STRING },
+      },
+      required: ['title', 'content'],
+    },
+  },
+  {
+    name: 'save_song',
+    description: 'Şarkı sözleri bölümüne yeni bir şarkı kaydeder.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        title: { type: Type.STRING },
+        lyrics: { type: Type.STRING },
+      },
+      required: ['title', 'lyrics'],
+    },
+  },
+  {
+    name: 'save_story',
+    description: 'Hikayeler bölümüne yeni bir hikaye kaydeder.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        title: { type: Type.STRING },
+        content: { type: Type.STRING },
+      },
+      required: ['title', 'content'],
+    },
+  },
+  {
+    name: 'log_mood',
+    description: 'Kullanıcının şu anki ruh halini 1 (çok kötü) ile 5 (harika) arasında kaydeder.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        value: { type: Type.NUMBER, description: '1 ile 5 arasında bir tam sayı.' },
+        note: { type: Type.STRING },
+      },
+      required: ['value'],
+    },
+  },
+];
+
+export async function executeJarvisFunction(name: string, args: Record<string, any>): Promise<Record<string, any>> {
+  switch (name) {
+    case 'get_sleep_stats': {
+      const [entries, settings] = await Promise.all([listSleepEntries(), getSettings()]);
+      const stats = computeSleepStats(entries, settings.bedtimeGoalHour, settings.bedtimeGoalMinute);
+      return {
+        averageDuration: formatMinutes(stats.averageDurationMinutes),
+        longest: formatMinutes(stats.longestMinutes),
+        shortest: formatMinutes(stats.shortestMinutes),
+        streakDays: stats.streakDays,
+        consistencyMinutesStdDev: stats.consistencyMinutesStdDev,
+        totalEntries: entries.length,
+      };
+    }
+    case 'log_sleep': {
+      const entry = await addManualSleepEntry({
+        sleepAt: args.sleepAtIso,
+        wakeAt: args.wakeAtIso,
+        note: args.note ?? '',
+      });
+      return { ok: true, durationMinutes: entry.durationMinutes };
+    }
+    case 'start_sleep_now': {
+      const existing = await getOpenSleepEntry();
+      if (existing) return { ok: false, reason: 'already_sleeping' };
+      const entry = await startSleep();
+      return { ok: true, id: entry.id };
+    }
+    case 'finish_sleep_now': {
+      const existing = await getOpenSleepEntry();
+      if (!existing) return { ok: false, reason: 'no_open_sleep' };
+      const entry = await finishSleep(existing.id);
+      return { ok: true, durationMinutes: entry?.durationMinutes ?? null };
+    }
+    case 'set_alarm': {
+      const alarm = await saveAlarm({
+        label: args.label ?? 'Alarm',
+        hour: args.hour,
+        minute: args.minute,
+        days: args.days ?? [],
+        enabled: true,
+        soundUri: null,
+        linkedToAwakeMode: false,
+      });
+      await scheduleAlarmNotifications(alarm);
+      return { ok: true, alarmId: alarm.id };
+    }
+    case 'start_awake_session': {
+      const session = await startAwakeSession({
+        targetTime: args.targetTimeIso,
+        reason: args.reason ?? '',
+        reminderIntervalMinutes: args.reminderIntervalMinutes ?? 20,
+        tasksEnabled: true,
+      });
+      return { ok: true, sessionId: session.id };
+    }
+    case 'save_note': {
+      const note = await saveNote({ title: args.title, content: args.content, tags: [], voiceUri: null });
+      return { ok: true, id: note.id };
+    }
+    case 'save_song': {
+      const song = await saveSong({ title: args.title, lyrics: args.lyrics, tags: [] });
+      return { ok: true, id: song.id };
+    }
+    case 'save_story': {
+      const story = await saveStory({ title: args.title, content: args.content, tags: [] });
+      return { ok: true, id: story.id };
+    }
+    case 'log_mood': {
+      const clamped = Math.min(5, Math.max(1, Math.round(args.value))) as MoodValue;
+      const entry = await logMood(clamped, args.note ?? '');
+      return { ok: true, id: entry.id };
+    }
+    default:
+      return { ok: false, reason: 'unknown_function' };
+  }
+}

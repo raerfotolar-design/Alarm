@@ -5,7 +5,8 @@
 ## Genel Bilgiler
 
 - **Platform:** Android (kullanıcı Android telefon kullanıyor)
-- **Teknoloji kararı:** Expo (React Native) — Expo Go üzerinden QR kod ile telefonda anında test edilecek. Gerekirse ileride .apk olarak paketlenebilir.
+- **Teknoloji kararı:** Expo (React Native) — geliştirme sırasında Expo Go üzerinden QR kod ile telefonda anında test edilecek.
+- **Dağıtım kararı:** Uygulama sadece Expo Go'da kalmayacak, kurulabilir bir **.apk** dosyası olarak EAS Build ile derlenecek. Build komutunu kullanıcı kendi (ücretsiz) Expo hesabıyla çalıştıracak, Claude tüm kodu ve yapılandırmayı (`eas.json`/`app.json`) hazırlayacak.
 - **Depolama:** Tüm kullanıcı verileri (uyku kayıtları, hikayeler, şarkı sözleri, notlar) **yerel depolama** (local storage / cihaz üzerinde) olacak. Buluta gönderilmeyecek.
 - **Gelecekte gönderilecek dosyalar:**
   - Uygulama ikonu (kullanıcı gönderecek)
@@ -27,9 +28,12 @@
 - Geri sayım ekranı (hedef saate kalan süre)
 
 ## 2. Jarvis — Kişisel Yapay Zeka
-- Kullanıcının göndereceği dosyaya göre kendine özgü karakter/bilgi tabanı
+- **Karar:** Ayrı bir dosya/uygulama gönderilmeyecek — Jarvis doğrudan uygulama içinde kodlanacak.
+- **Motor:** Gemini API (kullanıcı kendi API anahtarını Ayarlar ekranından girecek, güvenli şekilde cihazda saklanacak).
+- **Kişilik:** Kullanıcıya "günaydın efendim" tarzı hitap eder, ara sıra espri yapar, samimi ama işini bilen bir asistan tonu.
 - Sohbet ekranı
 - Uyku istatistiklerine erişip yorum/tavsiye verebilir
+- **Görev yürütme:** Uygulama içi işlemleri kendisi yapabilir (örn. "bu gece 5 saat uyudum" dersen uyku kaydını kendisi girer, "yarın için 8'e alarm kur" dersen alarmı kendisi kurar) — basit fonksiyon çağırma (function calling) ile.
 - Hikaye/şarkı/not bölümleriyle etkileşebilir (fikir üretme, geliştirme vb.)
 
 ## 3. Hikaye Yazma Bölümü
@@ -48,7 +52,16 @@
 - Klasik alarm kurma
 - Uyanık kalma modundaki hatırlatma/alarmlarla bağlantılı çalışabilir
 
-## Önerilen Ek Özellikler (onay bekliyor)
+## 7. Jarvis Sesli Asistan (Siri Tarzı)
+
+- **Uyandırma kelimesi:** "Jarvis" — telefon kilitliyken/arka plandayken bile dinler.
+- **Motor:** Picovoice Porcupine (native wake-word engine, düşük pil tüketimi, arka planda foreground service ile çalışır — Android bunun için kalıcı bir bildirim göstermeyi zorunlu kılar).
+- **Kurulum gereksinimleri (kullanıcı sağlayacak):** Ücretsiz Picovoice hesabı + özel "Jarvis" keyword dosyası (.ppn), AccessKey.
+- **Görsel anlama:** Kamera ile fotoğraf çekip Gemini'nin görsel (multimodal) API'sine gönderme — "bu ne?" gibi sorulara cevap verir.
+- **Sesli komutlar:** "kamerayı aç", "uyku kaydımı gir", "alarm kur" gibi komutları anlayıp ilgili uygulama içi eylemi tetikler.
+- **Not:** Bu özellik Expo Go ile test edilemez (native modül) — EAS Build ile gerçek APK derlenmesi gerekir.
+
+## Ek Özellikler (ONAYLANDI — hepsi dahil edilecek)
 
 - Ruh hali (mood) takibi — uyku kalitesiyle ilişkilendirme
 - Streak / hedef sistemi — düzenli yatma saatini teşvik
@@ -60,8 +73,17 @@
 - Gizlilik kilidi (PIN/biyometrik)
 - Özel alarm sesi (kullanıcının kendi ses kaydı/müziği)
 
-## Bekleyen Kararlar
+## Genişletilebilirlik
 
-- [ ] Önerilen ek özelliklerden hangileri dahil edilecek?
-- [ ] Uygulama ikonu (kullanıcı gönderecek)
-- [ ] Jarvis dosyası (kullanıcı gönderecek) — entegre edilene kadar placeholder bir bölüm olarak bırakılacak
+Uygulama modüler bölüm (section) yapısında kurulacak — her özellik bağımsız bir ekran/modül olarak yazılacak. Kullanıcı ileride yeni bir bölüm isterse mevcut yapı bozulmadan eklenebilecek.
+
+## Durum
+
+- [x] Uygulama adı: RAER Special App
+- [x] Uygulama ikonu eklendi (assets/icon.jpg — kullanıcının gönderdiği görsel)
+- [x] Tüm ekranlar ve özellikler kodlandı (bkz. README.md), Android için Metro bundle testi başarılı
+- [ ] Gemini API anahtarı (kullanıcı Ayarlar ekranından girecek)
+- [ ] Picovoice AccessKey + özel "Jarvis" keyword dosyası (kullanıcı sağlayacak — bkz. assets/wakeword/README.md)
+- [ ] APK'nın EAS Build ile derlenmesi (kullanıcı kendi Expo hesabıyla çalıştıracak — bkz. README.md adım 4)
+
+Kurulum ve kullanım detayları için bkz. **README.md**.
