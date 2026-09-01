@@ -87,6 +87,8 @@
   - **Onaylanan ek:** Özel gün hatırlatıcıları (yıldönümü/doğum günü) için otomatik bildirim.
 - **Onaylanan ek:** Sol menüdeki bölüm sırası kullanıcı tarafından sürüklenerek özelleştirilebilecek.
 - **Onaylanan ek:** Açılışta kısa bir intro/logo animasyonu.
+- **Yeni bölüm — "Ninni":** Kullanıcının kendi ninni ses dosyasını (Files'tan) yükleyip tek dokunuşla çalabileceği ayrı bir bölüm. Bitince otomatik döngü, uyku zamanlayıcı (X dakika sonra otomatik durur), YouTube linki kaydedip kısayolla açma. Jarvis'e "ninnimi çal" dediğinde de bu bölümü tetikleyebilmesi (fonksiyon çağırma ile).
+- **Tasarım referansı alındı:** Kullanıcı koyu/neon (camgöbeği-mavi parlayan kenarlıklı) kart tabanlı bir arayüz örneği gönderdi — genel his/yön olarak kullanılacak, kesin renk/logo kullanıcı gönderince netleşecek.
 
 ### 8b. İkinci Öneri Turu (ONAYLANDI — widget hariç hepsi eklenecek)
 
