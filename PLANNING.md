@@ -166,8 +166,6 @@ Uygulama modüler bölüm (section) yapısında kurulacak — her özellik bağ�
 - [x] Uygulama içi genel arama (Ana Sayfa'dan hikaye/şarkı/not/hobi'de birden arama)
 - [x] Kullanım istatistiği (Ayarlar'da "Kullanım Özeti" kartı)
 
-### v2 — henüz kodlanmadı
+- [x] Haftalık Jarvis raporu — her Pazar 20:00 hatırlatma bildirimi + Ana Sayfa'da "Bu Haftanın Raporunu Getir" butonu (son 7 günün uyku verisine göre)
 
-- [ ] Haftalık Jarvis raporu (otomatik/zamanlanmış özet — şu an sadece isteğe bağlı günlük brifing var)
-
-Kurulum ve kullanım detayları için bkz. **README.md**.
+Planlanan v2 özelliklerinin tamamı kodlandı. Kurulum ve kullanım detayları için bkz. **README.md**.

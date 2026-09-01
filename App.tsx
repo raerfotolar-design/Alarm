@@ -5,7 +5,7 @@ import { ThemeProvider, useAppTheme } from './src/theme/ThemeContext';
 import RootNavigator from './src/navigation/RootNavigator';
 import LockGateScreen from './src/screens/settings/LockGateScreen';
 import { getSettings } from './src/storage/settingsRepository';
-import { ensureNotificationSetup } from './src/services/notifications';
+import { ensureNotificationSetup, scheduleWeeklyReportReminder } from './src/services/notifications';
 import { JarvisVoiceAssistant } from './src/services/JarvisVoiceAssistant';
 import { AlarmNotificationBridge } from './src/services/AlarmNotificationBridge';
 import { AlarmRingOverlay } from './src/components/AlarmRingOverlay';
@@ -27,7 +27,9 @@ function AppContent() {
       setPinHash(settings.pinHash);
       setBiometricEnabled(settings.biometricEnabled);
       setLoading(false);
-      ensureNotificationSetup().catch(() => {});
+      ensureNotificationSetup()
+        .then(() => scheduleWeeklyReportReminder())
+        .catch(() => {});
     })();
   }, []);
 

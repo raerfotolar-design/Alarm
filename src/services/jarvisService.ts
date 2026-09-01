@@ -185,6 +185,28 @@ export async function getDailyBriefing(apiKey: string, context: string): Promise
   return response.text ?? '';
 }
 
+/** One-off helper for Home's "Haftalık Rapor" button. */
+export async function getWeeklyReport(apiKey: string, context: string): Promise<string> {
+  if (!apiKey) return 'Gemini API anahtarı girilmemiş.';
+  const ai = new GoogleGenAI({ apiKey });
+  const settings = await getSettings();
+  const response = await ai.models.generateContent({
+    model: MODEL,
+    contents: [
+      {
+        role: 'user',
+        parts: [
+          {
+            text: `Aşağıda kullanıcının son 7 güne ait uyku verileri var. Kısa (4-5 cümle) bir haftalık değerlendirme yap: genel düzeni nasıldı, neyi iyi yaptı, önümüzdeki hafta için somut bir tavsiye ver:\n\n${context}`,
+          },
+        ],
+      },
+    ],
+    config: { systemInstruction: buildSystemInstruction(settings.jarvisTone) },
+  });
+  return response.text ?? '';
+}
+
 /** One-off helper for the Stories/Songs editor's "devam ettir" button. */
 export async function continueWriting(apiKey: string, existingText: string, kind: 'story' | 'song'): Promise<string> {
   if (!apiKey) return '';

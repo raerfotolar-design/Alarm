@@ -12,7 +12,7 @@ import { computeSleepStats, formatMinutes } from '../services/stats';
 import { getSettings } from '../storage/settingsRepository';
 import { logMood } from '../storage/moodRepository';
 import { getJson, setJson, STORAGE_KEYS } from '../storage/storage';
-import { getDailyMotivation, getDailyBriefing } from '../services/jarvisService';
+import { getDailyMotivation, getDailyBriefing, getWeeklyReport } from '../services/jarvisService';
 import { MoodValue } from '../types';
 import type { HomeStackParamList, RootTabParamList } from '../navigation/RootNavigator';
 
@@ -41,6 +41,8 @@ export default function HomeScreen() {
   const [briefingLoading, setBriefingLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [weeklyReport, setWeeklyReport] = useState('');
+  const [weeklyReportLoading, setWeeklyReportLoading] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -103,6 +105,21 @@ export default function HomeScreen() {
     setSearchQuery('');
     setSearchResults([]);
     navigation.getParent()?.navigate(result.tab as never);
+  }
+
+  async function handleWeeklyReport() {
+    if (!apiKey) return;
+    setWeeklyReportLoading(true);
+    const entries = await listSleepEntries();
+    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const recent = entries.filter((e) => new Date(e.sleepAt).getTime() >= weekAgo && e.durationMinutes != null);
+    const lines = recent
+      .map((e) => `${new Date(e.sleepAt).toLocaleDateString('tr-TR', { weekday: 'short' })}: ${formatMinutes(e.durationMinutes ?? 0)}${e.mood ? `, ruh hali ${e.mood}/5` : ''}`)
+      .join('\n');
+    const context = recent.length > 0 ? lines : 'Bu hafta hiç uyku kaydı girilmemiş.';
+    const text = await getWeeklyReport(apiKey, context);
+    setWeeklyReport(text);
+    setWeeklyReportLoading(false);
   }
 
   async function handleBriefing() {
@@ -200,6 +217,18 @@ export default function HomeScreen() {
             <ActivityIndicator color={theme.colors.primary} />
           ) : (
             <PrimaryButton title="📋 Bugünkü Brifingi Getir" variant="outline" onPress={handleBriefing} />
+          )}
+        </Card>
+      ) : null}
+
+      {apiKey ? (
+        <Card>
+          <Subtitle style={{ marginBottom: 10 }}>📊 Haftalık Rapor</Subtitle>
+          {weeklyReport ? <BodyText style={{ marginBottom: 10 }}>{weeklyReport}</BodyText> : null}
+          {weeklyReportLoading ? (
+            <ActivityIndicator color={theme.colors.primary} />
+          ) : (
+            <PrimaryButton title="Bu Haftanın Raporunu Getir" variant="outline" onPress={handleWeeklyReport} />
           )}
         </Card>
       ) : null}

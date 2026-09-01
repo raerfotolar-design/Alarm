@@ -138,6 +138,38 @@ export async function scheduleSpecialDateReminder(date: Date, label: string): Pr
   });
 }
 
+const WEEKLY_REPORT_CHANNEL_ID = 'raer-weekly-report-v1';
+
+export async function scheduleWeeklyReportReminder(): Promise<void> {
+  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+  const already = scheduled.find((n) => n.content.data?.kind === 'weekly-report');
+  if (already) return;
+
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync(WEEKLY_REPORT_CHANNEL_ID, {
+      name: 'Haftalık Rapor',
+      importance: Notifications.AndroidImportance.DEFAULT,
+      sound: 'default',
+    });
+  }
+
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: '📊 Haftalık Uyku Raporun Hazır',
+      body: 'Bu haftaki uyku düzenini görmek için Ana Sayfa\'ya git.',
+      sound: 'default',
+      data: { kind: 'weekly-report' },
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
+      weekday: 1, // Pazar
+      hour: 20,
+      minute: 0,
+      channelId: WEEKLY_REPORT_CHANNEL_ID,
+    },
+  });
+}
+
 export async function cancelNotificationsByIds(ids: string[]): Promise<void> {
   await Promise.all(ids.map((id) => Notifications.cancelScheduledNotificationAsync(id).catch(() => {})));
 }
