@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
-import { View, Modal, Pressable, Image, ActivityIndicator } from 'react-native';
+import { View, Modal, Pressable, Image, ActivityIndicator, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { Screen, Title, Subtitle, Card, BodyText, PrimaryButton, Field, Chip } from '../../components/ui';
+import { Screen, Title, Subtitle, Card, BodyText, PrimaryButton, Field, Chip, StatTile } from '../../components/ui';
 import { useAppTheme } from '../../theme/ThemeContext';
 import { listMedia, saveMediaItem, deleteMediaItem } from '../../storage/mediaRepository';
 import { lookupCoverUrl } from '../../services/mediaLookupService';
@@ -106,6 +106,21 @@ export default function HobbyScreen() {
 
   const progressLabelText = progressFieldLabel(kind);
 
+  const doneCount = items.filter((i) => i.status === 'done').length;
+  const inProgressCount = items.filter((i) => i.status === 'in_progress').length;
+  const watchlistCount = items.filter((i) => i.status === 'watchlist').length;
+  const topRated = [...items].filter((i) => i.rating != null).sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)).slice(0, 5);
+
+  function handleSuggest() {
+    const candidates = items.filter((i) => i.status === 'watchlist');
+    if (candidates.length === 0) {
+      Alert.alert('Liste boş', 'İzlemek istiyorum listende bu kategoride bir şey yok.');
+      return;
+    }
+    const pick = candidates[Math.floor(Math.random() * candidates.length)];
+    Alert.alert('🎲 Öneri', pick.title);
+  }
+
   return (
     <Screen>
       <Title>Hobi</Title>
@@ -116,6 +131,20 @@ export default function HobbyScreen() {
           <Chip key={k} label={KIND_LABEL[k]} selected={kind === k} onPress={() => setKind(k)} />
         ))}
       </View>
+
+      <Card>
+        <View style={{ flexDirection: 'row', marginBottom: topRated.length > 0 ? 10 : 0 }}>
+          <StatTile label="İzledim" value={`${doneCount}`} />
+          <StatTile label="İzliyorum" value={`${inProgressCount}`} />
+          <StatTile label="Listede" value={`${watchlistCount}`} />
+        </View>
+        {topRated.length > 0 ? (
+          <BodyText style={{ color: theme.colors.textMuted, fontSize: 12 }}>
+            En yüksek puanlılar: {topRated.map((i) => `${i.title} (${i.rating})`).join(', ')}
+          </BodyText>
+        ) : null}
+      </Card>
+      <PrimaryButton title="🎲 Ne izlesem?" variant="outline" onPress={handleSuggest} />
 
       <Field label="Ara" placeholder="Başlık veya not" value={query} onChangeText={setQuery} />
       <PrimaryButton title="+ Yeni Ekle" onPress={openNew} />
