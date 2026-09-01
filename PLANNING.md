@@ -73,6 +73,25 @@
 - Gizlilik kilidi (PIN/biyometrik)
 - Özel alarm sesi (kullanıcının kendi ses kaydı/müziği)
 
+## 8. Yeniden Tasarım (v2 — henüz uygulanmadı, plan aşamasında)
+
+- **Genel tema:** Daha derin/karanlık bir tema, kullanıcının göndereceği logo/renklere göre kişiselleştirilecek.
+- **Navigasyon:** Alt sekme çubuğu yerine **solda dikey bir menü** (ikon + isim listesi).
+- **Uyku bölümü:** Uyku Modu ve Uyanık Kalma Modu artık görsel olarak birbirinden tamamen farklı temalarda olacak (Uyku Modu: sakin gece/ay paleti; Uyanık Kalma Modu: enerjik kırmızı/turuncu paleti).
+- **Yeni bölüm — Hobi:** Alt sekmeler: Filmler / Diziler / Animeler / Çizgi Roman-Manga. Her kayıt: başlık, kapak görseli, durum (izlemek istiyorum/izliyorum/izledim), puan, not.
+  - Jarvis, başlık girilince kapak görselini otomatik bulacak: filmler/diziler için TMDb API, anime/manga için AniList API (ikisi de ücretsiz, kullanıcı kendi anahtarını/erişimini Ayarlar'a girecek).
+  - **Onaylanan ek:** Kitap takibi de Hobi bölümüne eklenecek.
+  - **Onaylanan ek:** Dizi/anime için sezon/bölüm takibi ("kaçıncı bölümde kaldım").
+- **Şarkı bölümü — Kafiye Yardımcısı:** Söz editöründe bir Jarvis ikonu; yazılan/seçilen kelimeyle kafiyeli kelime önerileri sunacak.
+- **Yeni bölüm — "For My Love":** Sevgiliyle ilgili özel notlar + ortak fotoğraf galerisi (yerel, güvenli).
+  - **Onaylanan ek:** Özel gün hatırlatıcıları (yıldönümü/doğum günü) için otomatik bildirim.
+- **Onaylanan ek:** Sol menüdeki bölüm sırası kullanıcı tarafından sürüklenerek özelleştirilebilecek.
+- **Onaylanan ek:** Açılışta kısa bir intro/logo animasyonu.
+
+## Bilinen Sorunlar / Notlar (henüz düzeltilmedi)
+
+- Kullanıcı bir bildirim aldığını bildirdi ama bu Jarvis mesajı değildi ve **bildirim sesi çalmadı, sessizce geldi**. Kaynağı belirsiz (uyanık kalma hatırlatma bildirimi mi, sistem bildirimi mi?) — ileride araştırılıp düzeltilecek.
+
 ## Genişletilebilirlik
 
 Uygulama modüler bölüm (section) yapısında kurulacak — her özellik bağımsız bir ekran/modül olarak yazılacak. Kullanıcı ileride yeni bir bölüm isterse mevcut yapı bozulmadan eklenebilecek.
