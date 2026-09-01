@@ -7,6 +7,15 @@ export interface SleepEntry {
   durationMinutes: number | null;
   mood: MoodValue | null;
   note: string;
+  dreamNote: string;
+  lastCaffeineTime: string;
+  screenTimeBeforeBedMinutes: number | null;
+}
+
+export interface RoutineChecklistItem {
+  id: string;
+  title: string;
+  done: boolean;
 }
 
 export type AwakeTaskType = 'math' | 'typing';

@@ -6,7 +6,7 @@ export async function listSleepEntries(): Promise<SleepEntry[]> {
   return [...entries].sort((a, b) => b.sleepAt.localeCompare(a.sleepAt));
 }
 
-export async function startSleep(note = ''): Promise<SleepEntry> {
+export async function startSleep(input: { note?: string; lastCaffeineTime?: string; screenTimeBeforeBedMinutes?: number } = {}): Promise<SleepEntry> {
   const entries = await getJson<SleepEntry[]>(STORAGE_KEYS.sleepEntries, []);
   const entry: SleepEntry = {
     id: newId(),
@@ -14,20 +14,27 @@ export async function startSleep(note = ''): Promise<SleepEntry> {
     wakeAt: null,
     durationMinutes: null,
     mood: null,
-    note,
+    note: input.note ?? '',
+    dreamNote: '',
+    lastCaffeineTime: input.lastCaffeineTime ?? '',
+    screenTimeBeforeBedMinutes: input.screenTimeBeforeBedMinutes ?? null,
   };
   await setJson(STORAGE_KEYS.sleepEntries, [entry, ...entries]);
   return entry;
 }
 
-export async function finishSleep(id: string, mood: SleepEntry['mood'] = null): Promise<SleepEntry | null> {
+export async function finishSleep(
+  id: string,
+  mood: SleepEntry['mood'] = null,
+  dreamNote = ''
+): Promise<SleepEntry | null> {
   const entries = await getJson<SleepEntry[]>(STORAGE_KEYS.sleepEntries, []);
   const idx = entries.findIndex((e) => e.id === id);
   if (idx === -1) return null;
   const wakeAt = new Date().toISOString();
   const sleepAt = new Date(entries[idx].sleepAt);
   const durationMinutes = Math.max(0, Math.round((new Date(wakeAt).getTime() - sleepAt.getTime()) / 60000));
-  entries[idx] = { ...entries[idx], wakeAt, durationMinutes, mood };
+  entries[idx] = { ...entries[idx], wakeAt, durationMinutes, mood, dreamNote };
   await setJson(STORAGE_KEYS.sleepEntries, entries);
   return entries[idx];
 }
@@ -50,6 +57,9 @@ export async function addManualSleepEntry(input: {
     durationMinutes,
     mood: input.mood ?? null,
     note: input.note ?? '',
+    dreamNote: '',
+    lastCaffeineTime: '',
+    screenTimeBeforeBedMinutes: null,
   };
   await setJson(STORAGE_KEYS.sleepEntries, [entry, ...entries]);
   return entry;

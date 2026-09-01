@@ -34,4 +34,6 @@ export const STORAGE_KEYS = {
   bucketList: 'raer.bucketList.v1',
   lullaby: 'raer.lullaby.v1',
   jarvisMemory: 'raer.jarvisMemory.v1',
+  routineChecklist: 'raer.routineChecklist.v1',
+  dailyMotivation: 'raer.dailyMotivation.v1',
 } as const;
