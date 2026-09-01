@@ -2,7 +2,7 @@ import { GoogleGenAI, Content, Part } from '@google/genai/web';
 import { jarvisFunctionDeclarations, executeJarvisFunction } from './jarvisTools';
 import { JarvisChatMessage } from '../types';
 
-const MODEL = 'gemini-2.5-flash';
+const MODEL = 'gemini-3.6-flash';
 
 const SYSTEM_INSTRUCTION = `Senin adın Jarvis. RAER Special App adlı kişisel bir mobil uygulamanın içinde yaşayan, kullanıcıya özel bir yapay zeka asistanısın.
 
