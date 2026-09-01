@@ -59,12 +59,18 @@ export interface MoodEntry {
   note: string;
 }
 
+export interface CreativeHistoryEntry {
+  content: string;
+  savedAt: ISODateString;
+}
+
 export interface CreativeItemBase {
   id: string;
   title: string;
   tags: string[];
   createdAt: ISODateString;
   updatedAt: ISODateString;
+  history: CreativeHistoryEntry[];
 }
 
 export interface Story extends CreativeItemBase {

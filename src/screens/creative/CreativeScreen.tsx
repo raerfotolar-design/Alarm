@@ -36,6 +36,7 @@ export default function CreativeScreen() {
   const [rhymeWord, setRhymeWord] = useState('');
   const [rhymes, setRhymes] = useState<string[]>([]);
   const [busyAction, setBusyAction] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
 
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
 
@@ -60,6 +61,7 @@ export default function CreativeScreen() {
     setVoiceUri(null);
     setRhymes([]);
     setRhymeWord('');
+    setShowHistory(false);
     setModalOpen(true);
   }
 
@@ -70,6 +72,7 @@ export default function CreativeScreen() {
     setVoiceUri((item as Note).voiceUri ?? null);
     setRhymes([]);
     setRhymeWord('');
+    setShowHistory(false);
     setModalOpen(true);
   }
 
@@ -207,6 +210,24 @@ export default function CreativeScreen() {
               ) : null}
             </View>
           ) : null}
+
+          {editing && editing.history.length > 0 ? (
+            <View style={{ marginBottom: 16 }}>
+              <PrimaryButton title={showHistory ? 'Geçmişi Gizle' : `📜 Geçmiş Sürümler (${editing.history.length})`} variant="outline" onPress={() => setShowHistory((v) => !v)} />
+              {showHistory
+                ? editing.history.map((h, i) => (
+                    <Card key={i}>
+                      <BodyText style={{ color: theme.colors.textMuted, fontSize: 12, marginBottom: 6 }}>
+                        {new Date(h.savedAt).toLocaleString('tr-TR')}
+                      </BodyText>
+                      <BodyText numberOfLines={3} style={{ marginBottom: 8 }}>{h.content}</BodyText>
+                      <PrimaryButton title="Bu sürüme dön" variant="outline" onPress={() => { setBody(h.content); setShowHistory(false); }} style={{ marginBottom: 0 }} />
+                    </Card>
+                  ))
+                : null}
+            </View>
+          ) : null}
+
           <PrimaryButton title="Kaydet" onPress={handleSave} />
           <PrimaryButton title="Vazgeç" variant="outline" onPress={() => setModalOpen(false)} />
         </Screen>

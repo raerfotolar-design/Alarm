@@ -39,8 +39,11 @@ export async function listNotes(query = ''): Promise<Note[]> {
   return items.filter((n) => matches(query, n.title, n.tags, n.content));
 }
 
-async function upsert<T extends { id: string; createdAt: string; updatedAt: string }>(
+type BodyField = 'content' | 'lyrics';
+
+async function upsert<T extends { id: string; createdAt: string; updatedAt: string; history: { content: string; savedAt: string }[] }>(
   kind: Kind,
+  bodyField: BodyField,
   input: Partial<T> & { id?: string }
 ): Promise<T> {
   const items = await getJson<T[]>(KEY_BY_KIND[kind], []);
@@ -48,24 +51,31 @@ async function upsert<T extends { id: string; createdAt: string; updatedAt: stri
   if (input.id) {
     const idx = items.findIndex((i) => i.id === input.id);
     if (idx !== -1) {
-      items[idx] = { ...items[idx], ...input, updatedAt: now } as T;
+      const previousBody = (items[idx] as any)[bodyField] as string | undefined;
+      const nextBody = (input as any)[bodyField] as string | undefined;
+      const history = items[idx].history ?? [];
+      const nextHistory =
+        previousBody !== undefined && nextBody !== undefined && previousBody !== nextBody
+          ? [{ content: previousBody, savedAt: items[idx].updatedAt }, ...history].slice(0, 20)
+          : history;
+      items[idx] = { ...items[idx], ...input, updatedAt: now, history: nextHistory } as T;
       await setJson(KEY_BY_KIND[kind], items);
       return items[idx];
     }
   }
-  const created = { ...input, id: newId(), createdAt: now, updatedAt: now } as T;
+  const created = { ...input, id: newId(), createdAt: now, updatedAt: now, history: [] } as unknown as T;
   await setJson(KEY_BY_KIND[kind], [created, ...items]);
   return created;
 }
 
 export function saveStory(input: Partial<Story> & { id?: string }) {
-  return upsert<Story>('stories', input);
+  return upsert<Story>('stories', 'content', input);
 }
 export function saveSong(input: Partial<Song> & { id?: string }) {
-  return upsert<Song>('songs', input);
+  return upsert<Song>('songs', 'lyrics', input);
 }
 export function saveNote(input: Partial<Note> & { id?: string }) {
-  return upsert<Note>('notes', input);
+  return upsert<Note>('notes', 'content', input);
 }
 
 export async function deleteItem(kind: Kind, id: string): Promise<void> {
