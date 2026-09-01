@@ -60,7 +60,11 @@ export function Card({ children, style }: { children: React.ReactNode; style?: V
     <View
       style={[
         styles.card,
-        { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+        {
+          backgroundColor: theme.colors.surface,
+          borderColor: theme.colors.border,
+          shadowColor: theme.colors.glow,
+        },
         style,
       ]}
     >
@@ -170,7 +174,16 @@ const styles = StyleSheet.create({
   title: { fontSize: 26, fontWeight: '700', marginBottom: 4 },
   subtitle: { fontSize: 14, marginBottom: 16 },
   body: { fontSize: 15, lineHeight: 21 },
-  card: { borderRadius: 16, borderWidth: 1, padding: 16, marginBottom: 14 },
+  card: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 16,
+    marginBottom: 14,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 10,
+    elevation: 3,
+  },
   button: {
     borderRadius: 14,
     paddingVertical: 14,

@@ -143,9 +143,30 @@ Uygulama modüler bölüm (section) yapısında kurulacak — her özellik bağ�
 
 - [x] Uygulama adı: RAER Special App
 - [x] Uygulama ikonu eklendi (assets/icon.jpg — kullanıcının gönderdiği görsel)
-- [x] Tüm ekranlar ve özellikler kodlandı (bkz. README.md), Android için Metro bundle testi başarılı
+- [x] v1 tüm ekranlar (bkz. README.md), Android için Metro bundle testi başarılı
 - [ ] Gemini API anahtarı (kullanıcı Ayarlar ekranından girecek)
 - [ ] Picovoice AccessKey + özel "Jarvis" keyword dosyası (kullanıcı sağlayacak — bkz. assets/wakeword/README.md)
 - [ ] APK'nın EAS Build ile derlenmesi (kullanıcı kendi Expo hesabıyla çalıştıracak — bkz. README.md adım 4)
+
+### v2 (redesign + genişletme) — kodlanan kısım
+
+- [x] Koyu neon tema (varsayılan), Ayarlar'dan açık temaya geçilebiliyor
+- [x] Uyku Modu / Uyanık Kalma Modu için ayrı renk vurguları (AccentScope)
+- [x] Sol ikon şeridi navigasyonu (alt sekme çubuğu kaldırıldı)
+- [x] Açılış logo animasyonu
+- [x] **Hobi** bölümü: Filmler/Diziler/Animeler/Manga/Kitaplar, durum/puan/ilerleme, TMDb+AniList+Open Library ile otomatik kapak bulma, Jarvis'ten `add_media_item`/`list_media_by_status`
+- [x] **For My Love** bölümü: anılar+fotoğraf galerisi, özel gün geri sayımı+bildirimi, bucket list — girişte ayrı PIN/biyometrik kilit (global kilitten bağımsız, her seferinde soruyor)
+- [x] **Ninni** bölümü: dosyadan çalma, döngü, uyku zamanlayıcısı, YouTube linki, Jarvis'ten `play_lullaby`/`stop_lullaby`
+- [x] Jarvis: ton ayarı (samimi/resmi/esprili), `remember_fact`/`recall_facts` hafıza, Şarkı editöründe kafiye bulucu + "devam ettir", kelime/karakter sayacı
+
+### v2 — henüz kodlanmadı (sıradaki)
+
+- [ ] Uyku öncesi rutin checklist'i, rüya günlüğü, kafein/ekran süresi takibi, haftalık Jarvis raporu
+- [ ] Jarvis günlük brifing + günlük motivasyon sözü (otomatik/zamanlanmış)
+- [ ] Hikaye/şarkı versiyon geçmişi
+- [ ] İzleme istatistikleri, top-10, "ne izlesem" önerisi (Hobi verisinden türetilecek, henüz ayrı bir ekran yok)
+- [ ] Alarm: kademeli ses artışı + bulmaca ile kapatma (foreground-only olarak planlandı)
+- [ ] Uygulama içi genel arama (tüm bölümlerde)
+- [ ] Kullanım istatistiği/profil ekranı
 
 Kurulum ve kullanım detayları için bkz. **README.md**.

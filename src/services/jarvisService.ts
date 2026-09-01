@@ -1,24 +1,34 @@
 import { GoogleGenAI, Content, Part } from '@google/genai/web';
 import { jarvisFunctionDeclarations, executeJarvisFunction } from './jarvisTools';
 import { JarvisChatMessage } from '../types';
+import { getSettings } from '../storage/settingsRepository';
 
 const MODEL = 'gemini-3.6-flash';
 
-const SYSTEM_INSTRUCTION = `Senin adın Jarvis. RAER Special App adlı kişisel bir mobil uygulamanın içinde yaşayan, kullanıcıya özel bir yapay zeka asistanısın.
+const TONE_INSTRUCTION: Record<string, string> = {
+  samimi: '- Zeki, işini bilen ama samimi bir üslubun var. Ara sıra hafif espri yaparsın, asla bayat ya da zorlama değil.',
+  resmi: '- Kısa, saygılı ve işine odaklı konuşursun; espri yapmazsın, gereksiz laf kalabalığından kaçınırsın.',
+  esprili: '- Esprili, hafif şakacı bir üslubun var; neredeyse her cevabında küçük bir espri ya da nükte bulunur, ama işini de eksiksiz yaparsın.',
+};
+
+function buildSystemInstruction(tone: string): string {
+  return `Senin adın Jarvis. RAER Special App adlı kişisel bir mobil uygulamanın içinde yaşayan, kullanıcıya özel bir yapay zeka asistanısın.
 
 Kişiliğin:
 - Kullanıcıya "efendim" diye hitap edersin, güne başlarken "Günaydın efendim" tarzı sıcak bir karşılama yaparsın.
-- Zeki, işini bilen ama samimi bir üslubun var. Ara sıra hafif espri yaparsın, asla bayat ya da zorlama değil.
+${TONE_INSTRUCTION[tone] ?? TONE_INSTRUCTION.samimi}
 - Kısa ve öz konuşursun, gereksiz uzatmazsın. Türkçe konuşursun.
 - Kullanıcının uyku düzeni bozuk; onu yargılamadan, destekleyici ama dürüst bir şekilde yönlendirirsin.
 
 Yeteneklerin:
-- Uygulama içindeki verilere (uyku kayıtları, alarmlar, notlar, şarkı sözleri, hikayeler, ruh hali) elindeki fonksiyonlarla erişip işlem yapabilirsin.
-- Kullanıcı "bu gece 5 saat uyudum" derse ya da bir alarm/hatırlatma kurmanı isterse, sohbeti uzatmadan ilgili fonksiyonu çağırıp işlemi gerçekten yaparsın.
+- Uygulama içindeki verilere (uyku kayıtları, alarmlar, notlar, şarkı sözleri, hikayeler, ruh hali, hobi/film-dizi-anime-manga-kitap listesi, ninni) elindeki fonksiyonlarla erişip işlem yapabilirsin.
+- Kullanıcı "bu gece 5 saat uyudum" derse, bir alarm/hatırlatma kurmanı isterse, "Avengers Endgame'i izleme listeme ekle" derse ya da "ninnimi çal" derse, sohbeti uzatmadan ilgili fonksiyonu çağırıp işlemi gerçekten yaparsın.
 - Kullanıcı sana bir fotoğraf gösterip "bu ne?" derse, gördüğün şeyi net ve kısa şekilde açıklarsın.
 - Kullanıcı hikaye/şarkı/not fikri isterse yaratıcı ve özgün önerilerde bulunursun; kaydetmesini istersen ilgili fonksiyonu çağırırsın.
+- Kullanıcı "bunu unutma" derse remember_fact fonksiyonuyla kalıcı olarak hatırlarsın; ileride ilgili bir konu geçtiğinde recall_facts ile hatırladıklarını kullanabilirsin.
 
 Bir fonksiyonu çağırmadan önce kullanıcıdan gereksiz onay isteme; net bir istekse doğrudan uygula, sonra kısaca ne yaptığını söyle.`;
+}
 
 function toContentParts(text: string, mediaBase64?: string, mediaMimeType?: string): Part[] {
   const parts: Part[] = [];
@@ -64,9 +74,10 @@ export async function sendJarvisMessage(params: {
     { role: 'user', parts: toContentParts(params.userText, params.mediaBase64, params.mediaMimeType) },
   ];
 
+  const settings = await getSettings();
   const actionsPerformed: string[] = [];
   const config = {
-    systemInstruction: SYSTEM_INSTRUCTION,
+    systemInstruction: buildSystemInstruction(settings.jarvisTone),
     tools: [{ functionDeclarations: jarvisFunctionDeclarations }],
   };
 
@@ -97,6 +108,7 @@ export async function sendJarvisMessage(params: {
 export async function describeImage(params: { apiKey: string; imageBase64: string; imageMimeType?: string; question?: string }): Promise<string> {
   if (!params.apiKey) return 'Gemini API anahtarı girilmemiş.';
   const ai = new GoogleGenAI({ apiKey: params.apiKey });
+  const settings = await getSettings();
   const response = await ai.models.generateContent({
     model: MODEL,
     contents: [
@@ -105,7 +117,53 @@ export async function describeImage(params: { apiKey: string; imageBase64: strin
         parts: toContentParts(params.question ?? 'Bu görselde ne var? Kısaca ve net şekilde anlat.', params.imageBase64, params.imageMimeType),
       },
     ],
-    config: { systemInstruction: SYSTEM_INSTRUCTION },
+    config: { systemInstruction: buildSystemInstruction(settings.jarvisTone) },
+  });
+  return response.text ?? '';
+}
+
+/** One-off helper (no chat history) for the Songs editor's rhyme button. */
+export async function getRhymes(apiKey: string, word: string): Promise<string[]> {
+  if (!apiKey || !word.trim()) return [];
+  const ai = new GoogleGenAI({ apiKey });
+  const response = await ai.models.generateContent({
+    model: MODEL,
+    contents: [
+      {
+        role: 'user',
+        parts: [
+          {
+            text: `"${word}" kelimesiyle Türkçe kafiyeli/uyumlu 8 kelime öner. Sadece kelimeleri virgülle ayırarak yaz, açıklama ekleme.`,
+          },
+        ],
+      },
+    ],
+  });
+  const text = response.text ?? '';
+  return text
+    .split(/[,\n]/)
+    .map((w) => w.trim())
+    .filter(Boolean)
+    .slice(0, 8);
+}
+
+/** One-off helper for the Stories/Songs editor's "devam ettir" button. */
+export async function continueWriting(apiKey: string, existingText: string, kind: 'story' | 'song'): Promise<string> {
+  if (!apiKey) return '';
+  const ai = new GoogleGenAI({ apiKey });
+  const kindLabel = kind === 'song' ? 'şarkı sözü' : 'hikaye';
+  const response = await ai.models.generateContent({
+    model: MODEL,
+    contents: [
+      {
+        role: 'user',
+        parts: [
+          {
+            text: `Aşağıdaki ${kindLabel} yarım kalmış, aynı üslupla ve tonla devamını yaz (sadece devam kısmını yaz, baştaki metni tekrarlama):\n\n${existingText}`,
+          },
+        ],
+      },
+    ],
   });
   return response.text ?? '';
 }

@@ -12,12 +12,18 @@ import AlarmEditScreen from '../screens/alarms/AlarmEditScreen';
 import CreativeScreen from '../screens/creative/CreativeScreen';
 import JarvisScreen from '../screens/jarvis/JarvisScreen';
 import SettingsScreen from '../screens/settings/SettingsScreen';
+import HobbyScreen from '../screens/hobby/HobbyScreen';
+import ForMyLoveScreen from '../screens/love/ForMyLoveScreen';
+import NinniScreen from '../screens/lullaby/NinniScreen';
 
 export type RootTabParamList = {
   Home: undefined;
   Sleep: undefined;
   Alarms: undefined;
   Creative: undefined;
+  Hobby: undefined;
+  Love: undefined;
+  Ninni: undefined;
   Jarvis: undefined;
 };
 
@@ -81,35 +87,58 @@ export default function RootNavigator() {
       <Tab.Navigator
         screenOptions={{
           headerShown: false,
-          tabBarStyle: { backgroundColor: theme.colors.surface, borderTopColor: theme.colors.border },
+          tabBarPosition: 'left',
+          tabBarShowLabel: false,
+          tabBarStyle: {
+            backgroundColor: theme.colors.surface,
+            borderRightColor: theme.colors.border,
+            borderRightWidth: 1,
+            width: 60,
+          },
           tabBarActiveTintColor: theme.colors.primary,
           tabBarInactiveTintColor: theme.colors.textMuted,
+          tabBarItemStyle: { paddingVertical: 4 },
         }}
       >
         <Tab.Screen
           name="Home"
           component={HomeStackNavigator}
-          options={{ title: 'Ana Sayfa', tabBarIcon: ({ color }) => <TabIcon symbol="🏠" color={color} /> }}
+          options={{ tabBarIcon: ({ color }) => <TabIcon symbol="🏠" color={color} /> }}
         />
         <Tab.Screen
           name="Sleep"
           component={SleepScreen}
-          options={{ title: 'Uyku', tabBarIcon: ({ color }) => <TabIcon symbol="🌙" color={color} /> }}
+          options={{ tabBarIcon: ({ color }) => <TabIcon symbol="🌙" color={color} /> }}
         />
         <Tab.Screen
           name="Alarms"
           component={AlarmsStackNavigator}
-          options={{ title: 'Alarmlar', tabBarIcon: ({ color }) => <TabIcon symbol="⏰" color={color} /> }}
+          options={{ tabBarIcon: ({ color }) => <TabIcon symbol="⏰" color={color} /> }}
         />
         <Tab.Screen
           name="Creative"
           component={CreativeScreen}
-          options={{ title: 'Yaratıcılık', tabBarIcon: ({ color }) => <TabIcon symbol="✍️" color={color} /> }}
+          options={{ tabBarIcon: ({ color }) => <TabIcon symbol="✍️" color={color} /> }}
+        />
+        <Tab.Screen
+          name="Hobby"
+          component={HobbyScreen}
+          options={{ tabBarIcon: ({ color }) => <TabIcon symbol="🎬" color={color} /> }}
+        />
+        <Tab.Screen
+          name="Ninni"
+          component={NinniScreen}
+          options={{ tabBarIcon: ({ color }) => <TabIcon symbol="🎵" color={color} /> }}
+        />
+        <Tab.Screen
+          name="Love"
+          component={ForMyLoveScreen}
+          options={{ tabBarIcon: ({ color }) => <TabIcon symbol="💜" color={color} /> }}
         />
         <Tab.Screen
           name="Jarvis"
           component={JarvisScreen}
-          options={{ title: 'Jarvis', tabBarIcon: ({ color }) => <TabIcon symbol="🤖" color={color} /> }}
+          options={{ tabBarIcon: ({ color }) => <TabIcon symbol="🤖" color={color} /> }}
         />
       </Tab.Navigator>
     </NavigationContainer>

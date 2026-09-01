@@ -12,13 +12,15 @@ import { listSleepEntries } from '../../storage/sleepRepository';
 import { listStories, listSongs, listNotes } from '../../storage/creativeRepository';
 import { exportAllAsFile } from '../../services/exportService';
 import { formatMinutes } from '../../services/stats';
-import { ThemePreference } from '../../types';
+import { ThemePreference, AppSettings } from '../../types';
 
 export default function SettingsScreen() {
   const { theme, preference, setPreference } = useAppTheme();
   const [bedtimeHour, setBedtimeHour] = useState('23');
   const [bedtimeMinute, setBedtimeMinute] = useState('0');
   const [geminiApiKey, setGeminiApiKey] = useState('');
+  const [tmdbApiKey, setTmdbApiKey] = useState('');
+  const [jarvisTone, setJarvisTone] = useState<AppSettings['jarvisTone']>('samimi');
   const [picovoiceAccessKey, setPicovoiceAccessKey] = useState('');
   const [wakeWordEnabled, setWakeWordEnabled] = useState(false);
   const [lockEnabled, setLockEnabled] = useState(false);
@@ -36,6 +38,8 @@ export default function SettingsScreen() {
         setBedtimeHour(String(settings.bedtimeGoalHour));
         setBedtimeMinute(String(settings.bedtimeGoalMinute));
         setGeminiApiKey(settings.geminiApiKey);
+        setTmdbApiKey(settings.tmdbApiKey);
+        setJarvisTone(settings.jarvisTone);
         setPicovoiceAccessKey(settings.picovoiceAccessKey);
         setWakeWordEnabled(settings.wakeWordEnabled);
         setLockEnabled(settings.lockEnabled);
@@ -52,6 +56,8 @@ export default function SettingsScreen() {
       bedtimeGoalHour: Math.min(23, Math.max(0, parseInt(bedtimeHour, 10) || 0)),
       bedtimeGoalMinute: Math.min(59, Math.max(0, parseInt(bedtimeMinute, 10) || 0)),
       geminiApiKey,
+      tmdbApiKey,
+      jarvisTone,
       picovoiceAccessKey,
       wakeWordEnabled,
       defaultAlarmSoundUri: defaultAlarmSound,
@@ -139,8 +145,8 @@ export default function SettingsScreen() {
       <Card>
         <Subtitle style={{ marginBottom: 10 }}>Görünüm</Subtitle>
         <View style={{ flexDirection: 'row' }}>
-          {(['system', 'light', 'dark'] as ThemePreference[]).map((p) => (
-            <Chip key={p} label={p === 'system' ? 'Sistem' : p === 'light' ? 'Açık' : 'Koyu'} selected={preference === p} onPress={() => setPreference(p)} />
+          {(['dark', 'light'] as ThemePreference[]).map((p) => (
+            <Chip key={p} label={p === 'light' ? 'Açık' : 'Koyu (Neon)'} selected={preference === p || (preference === 'system' && p === 'dark')} onPress={() => setPreference(p)} />
           ))}
         </View>
       </Card>
@@ -165,6 +171,23 @@ export default function SettingsScreen() {
       <Card>
         <Subtitle style={{ marginBottom: 10 }}>Jarvis (Gemini API)</Subtitle>
         <Field label="Gemini API Anahtarı" value={geminiApiKey} onChangeText={setGeminiApiKey} secureTextEntry placeholder="AIza..." />
+        <BodyText style={{ marginBottom: 8 }}>Jarvis'in tonu</BodyText>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+          {(['samimi', 'resmi', 'esprili'] as AppSettings['jarvisTone'][]).map((t) => (
+            <Chip
+              key={t}
+              label={t === 'samimi' ? 'Samimi' : t === 'resmi' ? 'Resmi' : 'Esprili'}
+              selected={jarvisTone === t}
+              onPress={() => setJarvisTone(t)}
+            />
+          ))}
+        </View>
+      </Card>
+
+      <Card>
+        <Subtitle style={{ marginBottom: 10 }}>Hobi — Kapak Görseli (TMDb)</Subtitle>
+        <Field label="TMDb API Anahtarı (film/dizi kapakları için)" value={tmdbApiKey} onChangeText={setTmdbApiKey} secureTextEntry placeholder="themoviedb.org'dan ücretsiz al" />
+        <BodyText style={{ color: theme.colors.textMuted }}>Anime/manga (AniList) ve kitap (Open Library) kapakları için anahtar gerekmez.</BodyText>
       </Card>
 
       <Card>

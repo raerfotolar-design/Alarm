@@ -2,7 +2,8 @@ import React, { useCallback, useState } from 'react';
 import { View, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Screen, Title, Subtitle, Card, BodyText, PrimaryButton, StatTile, Chip, Field } from '../../components/ui';
-import { useAppTheme } from '../../theme/ThemeContext';
+import { useAppTheme, AccentScope } from '../../theme/ThemeContext';
+import { sleepModeAccent, awakeModeAccent } from '../../theme/theme';
 import {
   getOpenSleepEntry,
   startSleep,
@@ -109,6 +110,7 @@ export default function SleepScreen() {
   }
 
   return (
+    <AccentScope accent={mode === 'sleep' ? sleepModeAccent : awakeModeAccent}>
     <Screen>
       <Title>Uyku</Title>
       <Subtitle>İki mod: uyumak için, ya da uyanık kalman gerektiğinde.</Subtitle>
@@ -214,5 +216,6 @@ export default function SleepScreen() {
         </>
       )}
     </Screen>
+    </AccentScope>
   );
 }

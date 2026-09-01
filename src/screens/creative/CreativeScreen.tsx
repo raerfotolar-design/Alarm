@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { View, Modal, Pressable } from 'react-native';
+import { View, Modal, Pressable, ActivityIndicator } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAudioRecorder, RecordingPresets, AudioModule } from 'expo-audio';
 import { Screen, Title, Subtitle, Card, BodyText, PrimaryButton, Field, Chip } from '../../components/ui';
@@ -7,6 +7,8 @@ import { useAppTheme } from '../../theme/ThemeContext';
 import { listStories, listSongs, listNotes, saveStory, saveSong, saveNote, deleteItem } from '../../storage/creativeRepository';
 import { exportTextAsFile } from '../../services/exportService';
 import { playSound } from '../../services/audio';
+import { getRhymes, continueWriting } from '../../services/jarvisService';
+import { getSettings } from '../../storage/settingsRepository';
 import { Story, Song, Note } from '../../types';
 
 type Kind = 'stories' | 'songs' | 'notes';
@@ -30,6 +32,10 @@ export default function CreativeScreen() {
   const [body, setBody] = useState('');
   const [voiceUri, setVoiceUri] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [apiKey, setApiKey] = useState('');
+  const [rhymeWord, setRhymeWord] = useState('');
+  const [rhymes, setRhymes] = useState<string[]>([]);
+  const [busyAction, setBusyAction] = useState(false);
 
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
 
@@ -38,6 +44,7 @@ export default function CreativeScreen() {
     if (kind === 'stories') setItems((await listStories(q)) as Item[]);
     if (kind === 'songs') setItems((await listSongs(q)) as Item[]);
     if (kind === 'notes') setItems((await listNotes(q)) as Item[]);
+    setApiKey((await getSettings()).geminiApiKey);
   }, [kind, query]);
 
   useFocusEffect(
@@ -51,6 +58,8 @@ export default function CreativeScreen() {
     setTitle('');
     setBody('');
     setVoiceUri(null);
+    setRhymes([]);
+    setRhymeWord('');
     setModalOpen(true);
   }
 
@@ -59,7 +68,24 @@ export default function CreativeScreen() {
     setTitle(item.title);
     setBody(getBody(kind, item));
     setVoiceUri((item as Note).voiceUri ?? null);
+    setRhymes([]);
+    setRhymeWord('');
     setModalOpen(true);
+  }
+
+  async function handleFindRhymes() {
+    if (!rhymeWord.trim() || !apiKey) return;
+    setBusyAction(true);
+    setRhymes(await getRhymes(apiKey, rhymeWord));
+    setBusyAction(false);
+  }
+
+  async function handleContinueWriting() {
+    if (!apiKey || !body.trim()) return;
+    setBusyAction(true);
+    const continuation = await continueWriting(apiKey, body, kind === 'songs' ? 'song' : 'story');
+    setBody((prev) => `${prev}\n${continuation}`);
+    setBusyAction(false);
   }
 
   async function handleSave() {
@@ -139,6 +165,36 @@ export default function CreativeScreen() {
             numberOfLines={10}
             style={{ minHeight: 180, textAlignVertical: 'top' }}
           />
+          <BodyText style={{ color: theme.colors.textMuted, fontSize: 12, marginTop: -8, marginBottom: 12 }}>
+            {body.trim() ? body.trim().split(/\s+/).length : 0} kelime · {body.length} karakter
+          </BodyText>
+
+          {(kind === 'songs' || kind === 'stories') && apiKey ? (
+            <PrimaryButton
+              title="✍️ Jarvis'e Devam Ettir"
+              variant="outline"
+              onPress={handleContinueWriting}
+              disabled={busyAction || !body.trim()}
+            />
+          ) : null}
+
+          {kind === 'songs' && apiKey ? (
+            <View style={{ marginBottom: 16 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
+                <View style={{ flex: 1, marginRight: 8 }}>
+                  <Field label="🤖 Kafiye bul (kelime yaz)" value={rhymeWord} onChangeText={setRhymeWord} />
+                </View>
+                <PrimaryButton title="Bul" onPress={handleFindRhymes} disabled={busyAction} style={{ marginBottom: 14 }} />
+              </View>
+              {busyAction ? <ActivityIndicator color={theme.colors.primary} /> : null}
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                {rhymes.map((r) => (
+                  <Chip key={r} label={r} onPress={() => setBody((prev) => `${prev} ${r}`)} />
+                ))}
+              </View>
+            </View>
+          ) : null}
+
           {kind === 'notes' ? (
             <View style={{ marginBottom: 16 }}>
               <PrimaryButton

@@ -120,6 +120,28 @@ export async function cancelAllAwakeReminders(): Promise<void> {
   await Promise.all(toCancel.map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier)));
 }
 
+export async function scheduleSpecialDateReminder(date: Date, label: string): Promise<string | null> {
+  if (date.getTime() <= Date.now()) return null;
+  return Notifications.scheduleNotificationAsync({
+    content: {
+      title: '💜 Özel Gün',
+      body: label,
+      sound: 'default',
+      priority: Notifications.AndroidNotificationPriority.HIGH,
+      data: { kind: 'special-date' },
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DATE,
+      date,
+      channelId: REMINDER_CHANNEL_ID,
+    },
+  });
+}
+
+export async function cancelNotificationsByIds(ids: string[]): Promise<void> {
+  await Promise.all(ids.map((id) => Notifications.cancelScheduledNotificationAsync(id).catch(() => {})));
+}
+
 export async function sendImmediateNotification(title: string, body: string): Promise<void> {
   await Notifications.scheduleNotificationAsync({
     content: { title, body, sound: 'default' },

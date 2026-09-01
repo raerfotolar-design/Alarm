@@ -7,10 +7,12 @@ import LockGateScreen from './src/screens/settings/LockGateScreen';
 import { getSettings } from './src/storage/settingsRepository';
 import { ensureNotificationSetup } from './src/services/notifications';
 import { JarvisVoiceAssistant } from './src/services/JarvisVoiceAssistant';
+import { SplashIntro } from './src/components/SplashIntro';
 
 function AppContent() {
   const { theme } = useAppTheme();
   const [loading, setLoading] = useState(true);
+  const [showIntro, setShowIntro] = useState(true);
   const [lockEnabled, setLockEnabled] = useState(false);
   const [pinHash, setPinHash] = useState('');
   const [biometricEnabled, setBiometricEnabled] = useState(false);
@@ -38,6 +40,7 @@ function AppContent() {
       <RootNavigator />
       <JarvisVoiceAssistant />
       <StatusBar style={theme.mode === 'dark' ? 'light' : 'dark'} />
+      {showIntro ? <SplashIntro onFinish={() => setShowIntro(false)} /> : null}
     </>
   );
 }

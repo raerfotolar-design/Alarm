@@ -79,6 +79,8 @@ export interface AppSettings {
   bedtimeGoalMinute: number;
   geminiApiKey: string;
   picovoiceAccessKey: string;
+  tmdbApiKey: string;
+  jarvisTone: 'samimi' | 'resmi' | 'esprili';
   wakeWordEnabled: boolean;
   lockEnabled: boolean;
   biometricEnabled: boolean;
@@ -93,4 +95,57 @@ export interface JarvisChatMessage {
   text: string;
   imageUri?: string;
   createdAt: ISODateString;
+}
+
+// --- Hobi (media tracking) ---
+
+export type MediaKind = 'movie' | 'series' | 'anime' | 'manga' | 'book';
+export type MediaStatus = 'watchlist' | 'in_progress' | 'done';
+
+export interface MediaItem {
+  id: string;
+  kind: MediaKind;
+  title: string;
+  coverUrl: string | null;
+  status: MediaStatus;
+  rating: number | null; // 1-10
+  note: string;
+  progressLabel: string; // e.g. "S2E5" or "sayfa 120/400"
+  createdAt: ISODateString;
+  updatedAt: ISODateString;
+}
+
+// --- For My Love ---
+
+export interface LoveNote {
+  id: string;
+  title: string;
+  content: string;
+  photoUris: string[];
+  createdAt: ISODateString;
+  updatedAt: ISODateString;
+}
+
+export interface SpecialDate {
+  id: string;
+  label: string;
+  date: ISODateString;
+  remindDaysBefore: number;
+  notificationIds: string[];
+}
+
+export interface BucketListItem {
+  id: string;
+  title: string;
+  done: boolean;
+  createdAt: ISODateString;
+}
+
+// --- Ninni (lullaby) ---
+
+export interface LullabySettings {
+  audioUri: string | null;
+  youtubeUrl: string;
+  loop: boolean;
+  sleepTimerMinutes: number;
 }

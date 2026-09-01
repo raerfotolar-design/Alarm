@@ -14,7 +14,11 @@ import { saveAlarm } from '../storage/alarmRepository';
 import { scheduleAlarmNotifications } from './notifications';
 import { saveNote, saveSong, saveStory } from '../storage/creativeRepository';
 import { logMood } from '../storage/moodRepository';
-import { MoodValue } from '../types';
+import { saveMediaItem, listMedia } from '../storage/mediaRepository';
+import { lookupCoverUrl } from './mediaLookupService';
+import { setLullabyPlaying } from './lullabyPlayer';
+import { rememberFact, listMemoryFacts } from '../storage/jarvisMemoryRepository';
+import { MoodValue, MediaKind } from '../types';
 
 export const jarvisFunctionDeclarations: FunctionDeclaration[] = [
   {
@@ -121,6 +125,54 @@ export const jarvisFunctionDeclarations: FunctionDeclaration[] = [
       required: ['value'],
     },
   },
+  {
+    name: 'add_media_item',
+    description: 'Hobi bölümüne (film/dizi/anime/manga/kitap) yeni bir kayıt ekler ve kapak görselini otomatik bulmaya çalışır.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        title: { type: Type.STRING, description: 'Film/dizi/anime/manga/kitap adı.' },
+        kind: { type: Type.STRING, description: "'movie' | 'series' | 'anime' | 'manga' | 'book' değerlerinden biri." },
+        status: { type: Type.STRING, description: "'watchlist' | 'in_progress' | 'done', varsayılan 'watchlist'." },
+      },
+      required: ['title', 'kind'],
+    },
+  },
+  {
+    name: 'list_media_by_status',
+    description: "Belirtilen türde ve durumdaki Hobi kayıtlarını listeler (örn. 'ne izlesem' sorusuna cevap vermek için izleme listesini getirir).",
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        kind: { type: Type.STRING, description: "'movie' | 'series' | 'anime' | 'manga' | 'book'." },
+        status: { type: Type.STRING, description: "'watchlist' | 'in_progress' | 'done'." },
+      },
+      required: ['kind'],
+    },
+  },
+  {
+    name: 'play_lullaby',
+    description: 'Kullanıcının kaydettiği ninniyi çalar.',
+  },
+  {
+    name: 'stop_lullaby',
+    description: 'Çalan ninniyi durdurur.',
+  },
+  {
+    name: 'remember_fact',
+    description: 'Kullanıcının "bunu unutma" dediği bir bilgiyi kalıcı olarak hafızana kaydeder.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        fact: { type: Type.STRING, description: 'Hatırlanacak bilgi, kısa ve net bir cümle olarak.' },
+      },
+      required: ['fact'],
+    },
+  },
+  {
+    name: 'recall_facts',
+    description: 'Daha önce hatırlaman istenen tüm bilgileri getirir.',
+  },
 ];
 
 export async function executeJarvisFunction(name: string, args: Record<string, any>): Promise<Record<string, any>> {
@@ -195,6 +247,35 @@ export async function executeJarvisFunction(name: string, args: Record<string, a
       const clamped = Math.min(5, Math.max(1, Math.round(args.value))) as MoodValue;
       const entry = await logMood(clamped, args.note ?? '');
       return { ok: true, id: entry.id };
+    }
+    case 'add_media_item': {
+      const kind = args.kind as MediaKind;
+      const settings = await getSettings();
+      const coverUrl = await lookupCoverUrl(args.title, kind, settings.tmdbApiKey);
+      const item = await saveMediaItem({
+        kind,
+        title: args.title,
+        status: args.status ?? 'watchlist',
+        coverUrl,
+      });
+      return { ok: true, id: item.id, coverFound: !!coverUrl };
+    }
+    case 'list_media_by_status': {
+      const items = await listMedia(args.kind as MediaKind);
+      const filtered = args.status ? items.filter((i) => i.status === args.status) : items;
+      return { items: filtered.map((i) => ({ title: i.title, status: i.status, rating: i.rating })) };
+    }
+    case 'play_lullaby':
+      return setLullabyPlaying(true);
+    case 'stop_lullaby':
+      return setLullabyPlaying(false);
+    case 'remember_fact': {
+      const entry = await rememberFact(args.fact);
+      return { ok: true, id: entry.id };
+    }
+    case 'recall_facts': {
+      const facts = await listMemoryFacts();
+      return { facts: facts.map((f) => f.fact) };
     }
     default:
       return { ok: false, reason: 'unknown_function' };
