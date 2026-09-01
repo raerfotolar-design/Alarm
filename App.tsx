@@ -7,6 +7,8 @@ import LockGateScreen from './src/screens/settings/LockGateScreen';
 import { getSettings } from './src/storage/settingsRepository';
 import { ensureNotificationSetup } from './src/services/notifications';
 import { JarvisVoiceAssistant } from './src/services/JarvisVoiceAssistant';
+import { AlarmNotificationBridge } from './src/services/AlarmNotificationBridge';
+import { AlarmRingOverlay } from './src/components/AlarmRingOverlay';
 import { SplashIntro } from './src/components/SplashIntro';
 
 function AppContent() {
@@ -39,6 +41,8 @@ function AppContent() {
     <>
       <RootNavigator />
       <JarvisVoiceAssistant />
+      <AlarmNotificationBridge />
+      <AlarmRingOverlay />
       <StatusBar style={theme.mode === 'dark' ? 'light' : 'dark'} />
       {showIntro ? <SplashIntro onFinish={() => setShowIntro(false)} /> : null}
     </>
