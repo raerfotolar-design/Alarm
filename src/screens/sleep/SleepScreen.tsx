@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { View, Alert } from 'react-native';
+import { View, Alert, Pressable } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Screen, Title, Subtitle, Card, BodyText, PrimaryButton, StatTile, Chip, Field } from '../../components/ui';
 import { useAppTheme, AccentScope } from '../../theme/ThemeContext';
@@ -15,9 +15,10 @@ import {
   endAwakeSession,
 } from '../../storage/sleepRepository';
 import { getSettings } from '../../storage/settingsRepository';
+import { listRoutineItems, toggleRoutineItem, resetRoutineChecklist } from '../../storage/routineRepository';
 import { computeSleepStats, formatMinutes } from '../../services/stats';
 import { ensureNotificationSetup, scheduleAwakeReminder, cancelAllAwakeReminders } from '../../services/notifications';
-import { SleepEntry, AwakeSession, MoodValue } from '../../types';
+import { SleepEntry, AwakeSession, MoodValue, RoutineChecklistItem } from '../../types';
 
 const MOOD_EMOJI: Record<MoodValue, string> = { 1: '😞', 2: '😕', 3: '😐', 4: '🙂', 5: '😄' };
 
@@ -34,18 +35,24 @@ export default function SleepScreen() {
   const [awakeTargetMinute, setAwakeTargetMinute] = useState('0');
   const [awakeReason, setAwakeReason] = useState('');
   const [now, setNow] = useState(Date.now());
+  const [routineItems, setRoutineItems] = useState<RoutineChecklistItem[]>([]);
+  const [caffeineTime, setCaffeineTime] = useState('');
+  const [screenTime, setScreenTime] = useState('');
+  const [dreamNote, setDreamNote] = useState('');
 
   const load = useCallback(async () => {
-    const [list, open, settings, awakeSession] = await Promise.all([
+    const [list, open, settings, awakeSession, routine] = await Promise.all([
       listSleepEntries(),
       getOpenSleepEntry(),
       getSettings(),
       getActiveAwakeSession(),
+      listRoutineItems(),
     ]);
     setEntries(list);
     setOpenEntry(open);
     setBedtimeGoal({ hour: settings.bedtimeGoalHour, minute: settings.bedtimeGoalMinute });
     setActiveAwake(awakeSession);
+    setRoutineItems(routine);
   }, []);
 
   useFocusEffect(
@@ -59,13 +66,25 @@ export default function SleepScreen() {
   const stats = computeSleepStats(entries, bedtimeGoal.hour, bedtimeGoal.minute);
 
   async function handleStartSleep() {
-    await startSleep();
+    await startSleep({
+      lastCaffeineTime: caffeineTime,
+      screenTimeBeforeBedMinutes: screenTime ? parseInt(screenTime, 10) || 0 : null,
+    });
+    await resetRoutineChecklist();
+    setCaffeineTime('');
+    setScreenTime('');
     load();
   }
 
   async function handleFinishSleep(mood?: MoodValue) {
     if (!openEntry) return;
-    await finishSleep(openEntry.id, mood ?? null);
+    await finishSleep(openEntry.id, mood ?? null, dreamNote);
+    setDreamNote('');
+    load();
+  }
+
+  async function handleToggleRoutineItem(id: string) {
+    await toggleRoutineItem(id);
     load();
   }
 
@@ -131,6 +150,7 @@ export default function SleepScreen() {
                 <BodyText style={{ marginBottom: 12, color: theme.colors.textMuted }}>
                   Geçen süre: {formatMinutes(Math.round((now - new Date(openEntry.sleepAt).getTime()) / 60000))}
                 </BodyText>
+                <Field label="Rüya notu (opsiyonel)" value={dreamNote} onChangeText={setDreamNote} placeholder="Ne rüyası gördün?" />
                 <BodyText style={{ marginBottom: 8 }}>Uyandın mı? Ruh halini seç:</BodyText>
                 <View style={{ flexDirection: 'row', marginBottom: 10 }}>
                   {([1, 2, 3, 4, 5] as MoodValue[]).map((value) => (
@@ -140,9 +160,27 @@ export default function SleepScreen() {
                 <PrimaryButton title="Ruh hali seçmeden bitir" variant="outline" onPress={() => handleFinishSleep()} />
               </>
             ) : (
-              <PrimaryButton title="😴 Uyudum (şimdi başlat)" onPress={handleStartSleep} />
+              <>
+                <Field label="Son kafein saati (opsiyonel)" value={caffeineTime} onChangeText={setCaffeineTime} placeholder="Örn. 17:30" />
+                <Field label="Yatmadan önce ekran süresi (dk, opsiyonel)" keyboardType="number-pad" value={screenTime} onChangeText={setScreenTime} />
+                <PrimaryButton title="😴 Uyudum (şimdi başlat)" onPress={handleStartSleep} />
+              </>
             )}
           </Card>
+
+          {!openEntry ? (
+            <Card>
+              <Subtitle style={{ marginBottom: 10 }}>Uyku Öncesi Rutin</Subtitle>
+              {routineItems.map((item) => (
+                <Pressable key={item.id} onPress={() => handleToggleRoutineItem(item.id)} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6 }}>
+                  <BodyText style={{ color: item.done ? theme.colors.textMuted : theme.colors.text, textDecorationLine: item.done ? 'line-through' : 'none' }}>
+                    {item.done ? '✅ ' : '⬜ '}
+                    {item.title}
+                  </BodyText>
+                </Pressable>
+              ))}
+            </Card>
+          ) : null}
 
           <Card>
             <Subtitle style={{ marginBottom: 10 }}>İstatistikler</Subtitle>

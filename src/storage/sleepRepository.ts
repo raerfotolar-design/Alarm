@@ -6,7 +6,7 @@ export async function listSleepEntries(): Promise<SleepEntry[]> {
   return [...entries].sort((a, b) => b.sleepAt.localeCompare(a.sleepAt));
 }
 
-export async function startSleep(input: { note?: string; lastCaffeineTime?: string; screenTimeBeforeBedMinutes?: number } = {}): Promise<SleepEntry> {
+export async function startSleep(input: { note?: string; lastCaffeineTime?: string; screenTimeBeforeBedMinutes?: number | null } = {}): Promise<SleepEntry> {
   const entries = await getJson<SleepEntry[]>(STORAGE_KEYS.sleepEntries, []);
   const entry: SleepEntry = {
     id: newId(),
