@@ -11,8 +11,12 @@ Notifications.setNotificationHandler({
   }),
 });
 
-const ALARM_CHANNEL_ID = 'raer-alarms';
-const REMINDER_CHANNEL_ID = 'raer-reminders';
+// Android notification channels are immutable once created — if an older build
+// created these with weaker settings (no sound/low importance), later code
+// changes are silently ignored on that device. Bumping the ID forces Android
+// to create a fresh channel with the current (correct) settings.
+const ALARM_CHANNEL_ID = 'raer-alarms-v2';
+const REMINDER_CHANNEL_ID = 'raer-reminders-v2';
 
 export async function ensureNotificationSetup(): Promise<boolean> {
   const { status } = await Notifications.requestPermissionsAsync({
@@ -52,6 +56,7 @@ export async function scheduleAlarmNotifications(alarm: Alarm): Promise<string[]
         title: alarm.label || 'Alarm',
         body: 'Kalkma zamanı geldi.',
         sound: 'default',
+        priority: Notifications.AndroidNotificationPriority.MAX,
         data: { alarmId: alarm.id },
       },
       trigger: {
@@ -68,6 +73,7 @@ export async function scheduleAlarmNotifications(alarm: Alarm): Promise<string[]
           title: alarm.label || 'Alarm',
           body: 'Kalkma zamanı geldi.',
           sound: 'default',
+          priority: Notifications.AndroidNotificationPriority.MAX,
           data: { alarmId: alarm.id },
         },
         trigger: {
@@ -97,6 +103,7 @@ export async function scheduleAwakeReminder(seconds: number, message: string): P
       title: 'RAER',
       body: message,
       sound: 'default',
+      priority: Notifications.AndroidNotificationPriority.HIGH,
       data: { kind: 'awake-reminder' },
     },
     trigger: {

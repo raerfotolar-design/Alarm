@@ -88,9 +88,50 @@
 - **Onaylanan ek:** Sol menüdeki bölüm sırası kullanıcı tarafından sürüklenerek özelleştirilebilecek.
 - **Onaylanan ek:** Açılışta kısa bir intro/logo animasyonu.
 
-## Bilinen Sorunlar / Notlar (henüz düzeltilmedi)
+### 8b. İkinci Öneri Turu (ONAYLANDI — widget hariç hepsi eklenecek)
 
-- Kullanıcı bir bildirim aldığını bildirdi ama bu Jarvis mesajı değildi ve **bildirim sesi çalmadı, sessizce geldi**. Kaynağı belirsiz (uyanık kalma hatırlatma bildirimi mi, sistem bildirimi mi?) — ileride araştırılıp düzeltilecek.
+**Uyku & Sağlık**
+- Uyku öncesi rutin checklist'i (ilaç, ışık, telefon vb.)
+- Kabus/rüya günlüğü — Jarvis yorumlayabilir
+- Kafein/ekran süresi takibi, uyku kalitesiyle ilişkilendirme
+- Haftalık uyku raporu — her Pazar Jarvis'ten otomatik özet + tavsiye
+
+**Jarvis**
+- Günlük brifing (hava durumu + o günkü alarm/hatırlatma özeti)
+- "Jarvis modu" kişilik ayarı (resmi/samimi/esprili)
+- Hafıza notları — "bunu unutma" dediklerini uzun süreli hatırlaması
+- Günlük motivasyon sözü
+
+**Hobi/Medya**
+- İzleme istatistikleri (aylık film/bölüm sayısı, en çok seçilen tür)
+- Puanlama + top 10 listesi
+- "Ne izlesem?" önerisi (geçmiş beğenilere göre)
+
+**Yaratıcılık**
+- Hikaye/şarkı için "devam ettir" (Jarvis'e yazdığın yeri verip devamını yazdırma)
+- Kelime/karakter sayacı (canlı)
+- Versiyon geçmişi (eski hale geri dönebilme)
+
+**For My Love**
+- Anı takvimi + geri sayım (ilk buluşma, yıldönümü vb.)
+- Ortak "bucket list"
+- Sürpriz hatırlatıcı (kişisel alarm)
+
+**Alarm/Bildirim**
+- Kademeli alarm (önce hafif titreşim, sonra sesi artan)
+- Bulmaca çözerek alarm kapatma
+
+**Genel/Sistem**
+- Uygulama içi genel arama (not/hikaye/şarkı/hobi hepsinde birden)
+- Kullanım istatistiği / basit "profil" ekranı
+
+**Hariç tutulan:** Ana ekran widget'ı (native ek efor gerektiriyor, şimdilik yok).
+
+## Bilinen Sorunlar / Notlar
+
+- [x] **Düzeltildi (kod):** Bildirimler sessiz geliyor / alarm çalmadan geçiyordu. Sebebi muhtemelen Android bildirim kanallarının değişmez (immutable) olması — eski APK kurulumlarında oluşan kanal, üzerine kurulan yeni APK'larda da aynı (sessiz/düşük öncelikli) ayarlarla kalıyordu. Kanal ID'leri değiştirildi (`raer-alarms-v2`, `raer-reminders-v2`) ve bildirimlere `priority: MAX` eklendi — bu, Android'in yeni ayarlarla temiz bir kanal oluşturmasını zorlar.
+  - **Kullanıcının test etmesi gereken:** Yeni APK'yı kurduktan sonra hâlâ sessiz/çalmıyor ise, telefonun pil optimizasyonu/arka plan kısıtlaması bu uygulamayı kısıtlıyor olabilir (özellikle Xiaomi/Samsung/OnePlus gibi telefonlarda yaygın) — Ayarlar > Uygulamalar > RAER Special App > Pil > "Kısıtlama yok" yapılmalı, ayrıca telefonun rahatsız etmeyin (DND) modu kapalı olmalı.
+- **Bilinmiyor / gelecek iş:** Şu anki alarm, tek seferlik bir bildirim sesi çalıyor — gerçek bir "çalar saat" gibi sürekli çalıp ekranı kilitli halde bile açan bir deneyim değil. Kullanıcı hâlâ yetersiz bulursa, bunun için native bir alarm mekanizması (tam ekran uyarı + döngüsel ses) ayrı bir iş olarak ele alınmalı.
 
 ## Genişletilebilirlik
 
