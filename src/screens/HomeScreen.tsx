@@ -2,17 +2,28 @@ import React, { useCallback, useState } from 'react';
 import { View, Pressable, Image, ActivityIndicator } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Screen, Title, Subtitle, Card, BodyText, StatTile, Chip, PrimaryButton } from '../components/ui';
+import { Screen, Title, Subtitle, Card, BodyText, StatTile, Chip, PrimaryButton, Field } from '../components/ui';
 import { useAppTheme } from '../theme/ThemeContext';
 import { listSleepEntries, getOpenSleepEntry, getActiveAwakeSession } from '../storage/sleepRepository';
 import { listAlarms } from '../storage/alarmRepository';
+import { listStories, listSongs, listNotes } from '../storage/creativeRepository';
+import { listMedia } from '../storage/mediaRepository';
 import { computeSleepStats, formatMinutes } from '../services/stats';
 import { getSettings } from '../storage/settingsRepository';
 import { logMood } from '../storage/moodRepository';
 import { getJson, setJson, STORAGE_KEYS } from '../storage/storage';
 import { getDailyMotivation, getDailyBriefing } from '../services/jarvisService';
 import { MoodValue } from '../types';
-import type { HomeStackParamList } from '../navigation/RootNavigator';
+import type { HomeStackParamList, RootTabParamList } from '../navigation/RootNavigator';
+
+interface SearchResult {
+  id: string;
+  kind: 'story' | 'song' | 'note' | 'media';
+  icon: string;
+  title: string;
+  snippet: string;
+  tab: keyof RootTabParamList;
+}
 
 const MOOD_EMOJI: Record<MoodValue, string> = { 1: '😞', 2: '😕', 3: '😐', 4: '🙂', 5: '😄' };
 
@@ -28,6 +39,8 @@ export default function HomeScreen() {
   const [motivation, setMotivation] = useState('');
   const [briefing, setBriefing] = useState('');
   const [briefingLoading, setBriefingLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
 
   useFocusEffect(
     useCallback(() => {
@@ -66,6 +79,32 @@ export default function HomeScreen() {
     }, [])
   );
 
+  async function handleSearch(q: string) {
+    setSearchQuery(q);
+    if (!q.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    const [stories, songs, notes, media] = await Promise.all([
+      listStories(q),
+      listSongs(q),
+      listNotes(q),
+      listMedia(undefined, q),
+    ]);
+    setSearchResults([
+      ...stories.map((s) => ({ id: s.id, kind: 'story' as const, icon: '📖', title: s.title, snippet: s.content, tab: 'Creative' as const })),
+      ...songs.map((s) => ({ id: s.id, kind: 'song' as const, icon: '🎵', title: s.title, snippet: s.lyrics, tab: 'Creative' as const })),
+      ...notes.map((n) => ({ id: n.id, kind: 'note' as const, icon: '🗒️', title: n.title, snippet: n.content, tab: 'Creative' as const })),
+      ...media.map((m) => ({ id: m.id, kind: 'media' as const, icon: '🎬', title: m.title, snippet: m.note, tab: 'Hobby' as const })),
+    ]);
+  }
+
+  function goToResult(result: SearchResult) {
+    setSearchQuery('');
+    setSearchResults([]);
+    navigation.getParent()?.navigate(result.tab as never);
+  }
+
   async function handleBriefing() {
     if (!apiKey) return;
     setBriefingLoading(true);
@@ -93,6 +132,22 @@ export default function HomeScreen() {
           <BodyText style={{ fontSize: 22 }}>⚙️</BodyText>
         </Pressable>
       </View>
+
+      <Field label="🔍 Uygulamada Ara" placeholder="Hikaye, şarkı, not veya hobi ara..." value={searchQuery} onChangeText={handleSearch} />
+      {searchResults.length > 0 ? (
+        <Card>
+          {searchResults.slice(0, 8).map((r) => (
+            <Pressable key={`${r.kind}-${r.id}`} onPress={() => goToResult(r)} style={{ paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: theme.colors.border }}>
+              <BodyText style={{ fontWeight: '700' }}>
+                {r.icon} {r.title}
+              </BodyText>
+              <BodyText style={{ color: theme.colors.textMuted, fontSize: 12 }} numberOfLines={1}>
+                {r.snippet}
+              </BodyText>
+            </Pressable>
+          ))}
+        </Card>
+      ) : null}
 
       {motivation ? (
         <Card>
