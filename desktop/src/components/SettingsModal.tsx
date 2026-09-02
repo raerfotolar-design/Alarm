@@ -35,6 +35,7 @@ export function SettingsModal({ settings, onSave, onClose }: SettingsModalProps)
   const [ollamaBaseUrl, setOllamaBaseUrl] = useState('');
   const [ollamaModel, setOllamaModel] = useState('');
   const [saveFolder, setSaveFolder] = useState('');
+  const [pcControlEnabled, setPcControlEnabled] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -43,11 +44,12 @@ export function SettingsModal({ settings, onSave, onClose }: SettingsModalProps)
     setOllamaBaseUrl(settings.ollamaBaseUrl);
     setOllamaModel(settings.ollamaModel);
     setSaveFolder(settings.saveFolder);
+    setPcControlEnabled(settings.pcControlEnabled);
   }, [settings]);
 
   const save = async () => {
     setSaving(true);
-    const patch: SettingsPatch = { geminiModel, ollamaBaseUrl, ollamaModel, saveFolder };
+    const patch: SettingsPatch = { geminiModel, ollamaBaseUrl, ollamaModel, saveFolder, pcControlEnabled };
     if (geminiKey.trim()) patch.geminiApiKey = geminiKey.trim();
     if (youtubeKey.trim()) patch.youtubeApiKey = youtubeKey.trim();
     await onSave(patch);
@@ -153,6 +155,34 @@ export function SettingsModal({ settings, onSave, onClose }: SettingsModalProps)
             placeholder="Boş bırakırsan uygulama klasöründeki 'kayitlar' kullanılır"
             style={inputStyle}
           />
+        </div>
+
+        <div
+          style={{
+            marginBottom: 24,
+            padding: 14,
+            borderRadius: 12,
+            background: pcControlEnabled ? 'rgba(251,191,36,0.08)' : 'var(--surface-alt)',
+            border: `1px solid ${pcControlEnabled ? 'rgba(251,191,36,0.45)' : 'var(--border)'}`,
+          }}
+        >
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={pcControlEnabled}
+              onChange={(e) => setPcControlEnabled(e.target.checked)}
+              style={{ marginTop: 2 }}
+            />
+            <span>
+              <span style={{ fontSize: 12.5, fontWeight: 700, display: 'block', marginBottom: 4 }}>
+                PC kontrolü
+              </span>
+              <span style={{ fontSize: 10.5, color: 'var(--text-dim)', lineHeight: 1.5 }}>
+                Açıkken Jarvis dosyalarını okuyabilir, arayabilir, klasör listeleyebilir ve dosya/uygulama
+                açabilir. Yazma, silme, taşıma ve terminal komutları her seferinde senin onayını ister.
+              </span>
+            </span>
+          </label>
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>

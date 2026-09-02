@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import {
   AI_CHANNELS,
+  PC_CHANNELS,
   RESEARCH_CHANNELS,
   SETTINGS_CHANNELS,
   STORE_CHANNELS,
@@ -9,6 +10,8 @@ import {
   type ChatResponse,
   type GenerateCardsRequest,
   type GenerateCardsResponse,
+  type PcExecuteResponse,
+  type PendingPcAction,
   type PublicSettings,
   type ResearchResult,
   type SaveResponse,
@@ -24,6 +27,8 @@ contextBridge.exposeInMainWorld('jarvisDesktop', {
   sendChat: (request: ChatRequest): Promise<ChatResponse> => ipcRenderer.invoke(AI_CHANNELS.chat, request),
   generateCards: (request: GenerateCardsRequest): Promise<GenerateCardsResponse> =>
     ipcRenderer.invoke(AI_CHANNELS.generateCards, request),
+  executeAction: (action: PendingPcAction): Promise<PcExecuteResponse> =>
+    ipcRenderer.invoke(PC_CHANNELS.execute, action),
   searchResearch: (query: string): Promise<SearchResponse> => ipcRenderer.invoke(RESEARCH_CHANNELS.search, query),
   saveResearch: (result: ResearchResult, phaseId: string | null): Promise<SaveResponse> =>
     ipcRenderer.invoke(RESEARCH_CHANNELS.save, result, phaseId),

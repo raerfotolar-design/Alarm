@@ -15,6 +15,7 @@ interface StoredSettings {
   ollamaBaseUrl: string;
   ollamaModel: string;
   saveFolder: string;
+  pcControlEnabled: boolean;
 }
 
 const DEFAULTS: StoredSettings = {
@@ -26,6 +27,7 @@ const DEFAULTS: StoredSettings = {
   ollamaBaseUrl: 'http://localhost:11434',
   ollamaModel: 'llama3.1:8b',
   saveFolder: '',
+  pcControlEnabled: false,
 };
 
 function settingsPath(): string {
@@ -55,6 +57,7 @@ export async function getPublicSettings(): Promise<PublicSettings> {
     ollamaBaseUrl: stored.ollamaBaseUrl,
     ollamaModel: stored.ollamaModel,
     saveFolder: stored.saveFolder,
+    pcControlEnabled: stored.pcControlEnabled,
   };
 }
 
@@ -94,6 +97,7 @@ export async function updateSettings(patch: SettingsPatch): Promise<PublicSettin
   if (patch.ollamaBaseUrl !== undefined) stored.ollamaBaseUrl = patch.ollamaBaseUrl;
   if (patch.ollamaModel !== undefined) stored.ollamaModel = patch.ollamaModel;
   if (patch.saveFolder !== undefined) stored.saveFolder = patch.saveFolder;
+  if (patch.pcControlEnabled !== undefined) stored.pcControlEnabled = patch.pcControlEnabled;
 
   await writeStored(stored);
   return getPublicSettings();
@@ -119,6 +123,7 @@ export async function getAiConfig(): Promise<{
   geminiModel: string;
   ollamaBaseUrl: string;
   ollamaModel: string;
+  pcControlEnabled: boolean;
 }> {
   const stored = await readStored();
   return {
@@ -126,5 +131,6 @@ export async function getAiConfig(): Promise<{
     geminiModel: stored.geminiModel,
     ollamaBaseUrl: stored.ollamaBaseUrl,
     ollamaModel: stored.ollamaModel,
+    pcControlEnabled: stored.pcControlEnabled,
   };
 }

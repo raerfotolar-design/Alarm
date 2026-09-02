@@ -13,6 +13,7 @@ import type {
   AppState,
   ChatMessage,
   LearningTopic,
+  PendingPcAction,
   PublicSettings,
   ReviewGrade,
   SettingsPatch,
@@ -44,6 +45,7 @@ export default function App() {
   const [settings, setSettings] = useState<PublicSettings | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [pending, setPending] = useState(false);
+  const [pendingAction, setPendingAction] = useState<PendingPcAction | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -100,6 +102,7 @@ export default function App() {
       });
       replyText = res.ok ? res.text : `⚠ ${res.error}`;
       if (res.ok && res.memory) updatedMemory = res.memory;
+      setPendingAction(res.ok && res.pendingAction ? res.pendingAction : null);
     } else {
       replyText = '⚠ Bu görünüm masaüstü uygulaması dışında çalışıyor, AI motoruna erişilemiyor.';
     }
@@ -109,6 +112,31 @@ export default function App() {
       s ? { ...s, chatMessages: [...s.chatMessages, jarvisMsg], memory: updatedMemory ?? s.memory } : s,
     );
     setPending(false);
+  };
+
+  const appendJarvisMessage = (text: string) =>
+    setState((s) =>
+      s
+        ? {
+            ...s,
+            chatMessages: [
+              ...s.chatMessages,
+              { id: newId(), role: 'jarvis' as const, text, createdAt: new Date().toISOString() },
+            ],
+          }
+        : s,
+    );
+
+  const onApproveAction = async (action: PendingPcAction) => {
+    setPendingAction(null);
+    if (!hasBridge()) return;
+    const res = await window.jarvisDesktop.executeAction(action);
+    appendJarvisMessage(res.ok ? `✓ ${action.description}\n\n${res.output}` : `⚠ ${res.error}`);
+  };
+
+  const onRejectAction = () => {
+    setPendingAction(null);
+    appendJarvisMessage('Tamam efendim, o işlemi yapmadım.');
   };
 
   const onSaveSettings = async (patch: SettingsPatch) => {
@@ -195,9 +223,12 @@ export default function App() {
             memory={state.memory}
             listening={state.listeningMode.jarvis}
             pending={pending}
+            pendingAction={pendingAction}
             onToggleListening={() => onToggleListening('jarvis')}
             onSendMessage={onSendMessage}
             onAddNote={onAddNote}
+            onApproveAction={onApproveAction}
+            onRejectAction={onRejectAction}
           />
         )}
         {tab === 'arastirma' && (

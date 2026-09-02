@@ -5,6 +5,7 @@ import type {
   GenerateCardsRequest,
   GenerateCardsResponse,
   JarvisMemory,
+  PendingPcAction,
 } from '../../shared/types';
 import { getAiConfig } from '../settings';
 import { askGemini } from './gemini';
@@ -21,6 +22,8 @@ import {
 } from './memory';
 
 import { buildCardPrompt, parseCards } from './cards';
+import { PC_TOOLS_INSTRUCTION, parseAction } from '../pc/protocol';
+import { describeAction, needsConfirmation, runTool } from '../pc/tools';
 
 type AiConfig = Awaited<ReturnType<typeof getAiConfig>>;
 
@@ -110,7 +113,10 @@ export async function handleChat(request: ChatRequest): Promise<ChatResponse> {
     return { ok: false, error: NO_KEY_ERROR };
   }
 
-  const systemPrompt = JARVIS_SYSTEM_PROMPT + buildMemoryBlock(request.memory, request.notes);
+  const systemPrompt =
+    JARVIS_SYSTEM_PROMPT +
+    buildMemoryBlock(request.memory, request.notes) +
+    (config.pcControlEnabled ? PC_TOOLS_INSTRUCTION : '');
 
   // Messages that have left the window but are not summarized yet are still sent verbatim,
   // otherwise they would sit in neither the prompt nor the summary and be forgotten outright.
@@ -118,12 +124,54 @@ export async function handleChat(request: ChatRequest): Promise<ChatResponse> {
   const pending = pendingForSummary(request.history, request.memory);
   const promptHistory = [...pending, ...recent];
 
-  let text: string;
+  let raw: string;
   try {
-    text = await ask(request.engine, config, systemPrompt, promptHistory, request.userText);
+    raw = await ask(request.engine, config, systemPrompt, promptHistory, request.userText);
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : 'Bilinmeyen bir hata oluştu.' };
   }
+
+  let text = raw;
+  let pendingAction: PendingPcAction | undefined;
+
+  if (config.pcControlEnabled) {
+    const parsed = parseAction(raw);
+    text = parsed.text;
+
+    if (parsed.action) {
+      if (needsConfirmation(parsed.action.tool)) {
+        // Anything that writes, deletes or executes waits for the user.
+        pendingAction = {
+          id: `action-${Date.now()}`,
+          tool: parsed.action.tool,
+          args: parsed.action.args,
+          description: describeAction(parsed.action.tool, parsed.action.args),
+        };
+      } else {
+        // Read-only actions run now, and the result goes back for a natural reply.
+        let toolOutput: string;
+        try {
+          toolOutput = await runTool(parsed.action.tool, parsed.action.args);
+        } catch (err) {
+          toolOutput = `Hata: ${err instanceof Error ? err.message : 'işlem başarısız oldu'}`;
+        }
+
+        try {
+          text = await ask(
+            request.engine,
+            config,
+            JARVIS_SYSTEM_PROMPT,
+            [...promptHistory, { id: 'tool-turn', role: 'user', text: request.userText, createdAt: '' }],
+            `Bilgisayarda "${describeAction(parsed.action.tool, parsed.action.args)}" işlemini yaptın. Sonuç:\n\n${toolOutput}\n\nBu sonucu kullanıcıya kısaca, kendi üslubunla anlat. JSON ekleme.`,
+          );
+        } catch {
+          text = `${text ? `${text}\n\n` : ''}${toolOutput}`.trim();
+        }
+      }
+    }
+  }
+
+  if (!text.trim()) text = pendingAction ? 'Bunu yapmam için onayın gerekiyor efendim.' : '...';
 
   // The reply is already earned; a memory refresh failing must never lose it. Only
   // stored history is summarized — this turn is still inside the recent window and
@@ -135,5 +183,5 @@ export async function handleChat(request: ChatRequest): Promise<ChatResponse> {
     memory = null;
   }
 
-  return memory ? { ok: true, text, memory } : { ok: true, text };
+  return { ok: true, text, ...(memory ? { memory } : {}), ...(pendingAction ? { pendingAction } : {}) };
 }

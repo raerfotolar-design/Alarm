@@ -5,14 +5,17 @@ import { getPublicSettings, updateSettings } from './settings';
 import { handleChat, handleGenerateCards } from './ai';
 import { openExternal, saveResult, search } from './research';
 import { handleMediaProtocol, registerMediaScheme } from './mediaProtocol';
+import { executeApprovedAction } from './pc';
 import {
   AI_CHANNELS,
+  PC_CHANNELS,
   RESEARCH_CHANNELS,
   SETTINGS_CHANNELS,
   STORE_CHANNELS,
   type AppState,
   type ChatRequest,
   type GenerateCardsRequest,
+  type PendingPcAction,
   type ResearchResult,
   type SettingsPatch,
 } from '../shared/types';
@@ -68,6 +71,10 @@ ipcMain.handle(AI_CHANNELS.chat, async (_event, request: ChatRequest) => {
 
 ipcMain.handle(AI_CHANNELS.generateCards, async (_event, request: GenerateCardsRequest) => {
   return handleGenerateCards(request);
+});
+
+ipcMain.handle(PC_CHANNELS.execute, async (_event, action: PendingPcAction) => {
+  return executeApprovedAction(action);
 });
 
 ipcMain.handle(RESEARCH_CHANNELS.search, async (_event, query: string) => {

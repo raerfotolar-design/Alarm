@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ListeningModeBar } from '../components/ListeningModeBar';
-import type { ChatMessage, JarvisMemory, ListeningNote } from '../../shared/types';
+import type { ChatMessage, JarvisMemory, ListeningNote, PendingPcAction } from '../../shared/types';
 
 interface JarvisScreenProps {
   messages: ChatMessage[];
@@ -8,9 +8,12 @@ interface JarvisScreenProps {
   memory: JarvisMemory;
   listening: boolean;
   pending: boolean;
+  pendingAction: PendingPcAction | null;
   onToggleListening: () => void;
   onSendMessage: (text: string) => void;
   onAddNote: (text: string) => void;
+  onApproveAction: (action: PendingPcAction) => void;
+  onRejectAction: () => void;
 }
 
 export function JarvisScreen({
@@ -19,9 +22,12 @@ export function JarvisScreen({
   memory,
   listening,
   pending,
+  pendingAction,
   onToggleListening,
   onSendMessage,
   onAddNote,
+  onApproveAction,
+  onRejectAction,
 }: JarvisScreenProps) {
   const [draft, setDraft] = useState('');
   const [noteDraft, setNoteDraft] = useState('');
@@ -75,6 +81,70 @@ export function JarvisScreen({
               {m.text}
             </div>
           ))}
+          {pendingAction && (
+            <div
+              style={{
+                alignSelf: 'flex-start',
+                maxWidth: '80%',
+                background: 'rgba(251,191,36,0.08)',
+                border: '1px solid rgba(251,191,36,0.5)',
+                borderRadius: 14,
+                padding: '12px 14px',
+              }}
+            >
+              <div style={{ fontSize: 11, color: '#FBBF24', fontWeight: 700, marginBottom: 6 }}>
+                ONAY GEREKİYOR
+              </div>
+              <div style={{ fontSize: 13, marginBottom: 4 }}>{pendingAction.description}</div>
+              {pendingAction.tool === 'run_command' && (
+                <pre
+                  style={{
+                    fontSize: 11.5,
+                    color: 'var(--text-dim)',
+                    background: 'var(--surface-alt)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 8,
+                    padding: 8,
+                    margin: '8px 0 0',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-all',
+                  }}
+                >
+                  {String(pendingAction.args.command ?? '')}
+                </pre>
+              )}
+              <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                <button
+                  onClick={() => onApproveAction(pendingAction)}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: 10,
+                    border: 'none',
+                    background: 'rgba(52,211,153,0.15)',
+                    color: '#34D399',
+                    fontSize: 12,
+                    fontWeight: 700,
+                  }}
+                >
+                  İzin ver
+                </button>
+                <button
+                  onClick={onRejectAction}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: 10,
+                    border: '1px solid var(--border)',
+                    background: 'transparent',
+                    color: 'var(--text-dim)',
+                    fontSize: 12,
+                    fontWeight: 600,
+                  }}
+                >
+                  Reddet
+                </button>
+              </div>
+            </div>
+          )}
           {pending && (
             <div
               style={{

@@ -58,6 +58,27 @@ export interface SavedResearchItem {
   createdAt: string;
 }
 
+export type PcToolName =
+  | 'list_dir'
+  | 'read_file'
+  | 'search_files'
+  | 'system_info'
+  | 'open_path'
+  | 'write_file'
+  | 'delete_path'
+  | 'move_path'
+  | 'run_command';
+
+/** An action Jarvis wants to take that the user must approve first. */
+export interface PendingPcAction {
+  id: string;
+  tool: PcToolName;
+  args: Record<string, unknown>;
+  description: string;
+}
+
+export type PcExecuteResponse = { ok: true; output: string } | { ok: false; error: string };
+
 export type LearningTopic = 'dil' | 'programlama';
 export type ReviewGrade = 'zor' | 'orta' | 'kolay';
 
@@ -132,6 +153,7 @@ export interface PublicSettings {
   ollamaBaseUrl: string;
   ollamaModel: string;
   saveFolder: string;
+  pcControlEnabled: boolean;
 }
 
 export interface SettingsPatch {
@@ -142,6 +164,7 @@ export interface SettingsPatch {
   ollamaBaseUrl?: string;
   ollamaModel?: string;
   saveFolder?: string;
+  pcControlEnabled?: boolean;
 }
 
 export interface ChatRequest {
@@ -154,8 +177,12 @@ export interface ChatRequest {
 }
 
 export type ChatResponse =
-  /** `memory` is present only when this turn produced an updated summary or new facts. */
-  { ok: true; text: string; memory?: JarvisMemory } | { ok: false; error: string };
+  /**
+   * `memory` is present only when this turn produced an updated summary or new facts;
+   * `pendingAction` when Jarvis wants to do something that needs the user's approval.
+   */
+  | { ok: true; text: string; memory?: JarvisMemory; pendingAction?: PendingPcAction }
+  | { ok: false; error: string };
 
 export const STORE_CHANNELS = {
   load: 'store:load',
@@ -170,6 +197,10 @@ export const AI_CHANNELS = {
 export const SETTINGS_CHANNELS = {
   get: 'settings:get',
   set: 'settings:set',
+} as const;
+
+export const PC_CHANNELS = {
+  execute: 'pc:execute',
 } as const;
 
 export const RESEARCH_CHANNELS = {

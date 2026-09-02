@@ -18,12 +18,17 @@ Design reference: https://claude.ai/code/artifact/0592fc1f-ea80-473d-a4be-354d5d
   - Listening-mode notes are injected too, with their dates — that is what makes "you told me this yesterday" work.
   - The summary refresh costs one extra model call, and only once every 10 messages that age out.
   - Both are visible in the Jarvis notes panel under "Jarvis'in Hafızası".
-- **Settings** (sidebar gear): Gemini API key + model, Ollama URL + model. The key is encrypted with Electron's `safeStorage` and is never sent back to the renderer.
+- **PC control** (off by default, switched on in Settings): Jarvis can act on the machine.
+  - *Runs by itself:* `list_dir`, `read_file`, `search_files`, `system_info`, `open_path` — read-only, plus opening a file the way double-clicking would.
+  - *Needs your approval every time:* `write_file`, `delete_path` (goes to the OS trash), `move_path`, `run_command` — the chat shows an approval card with the exact path or command, and nothing runs until you press İzin ver.
+  - Neither engine's native function-calling is used, so it works identically on Gemini and any Ollama model: the model answers with a `{"action": ...}` block, which `electron/pc/protocol.ts` parses out and never shows to the user.
+  - The main process re-checks the switch and the tool name on every execution, so an approval-shaped message cannot run anything on its own.
+- **Settings** (sidebar gear): Gemini and YouTube API keys, model names, Ollama URL, save folder, PC-control switch. Keys are encrypted with Electron's `safeStorage` and never sent back to the renderer.
 - **Planlama**: real Plan Ağacı data model — phases, progress, possibilities (toggleable), per-phase notes, add-phase FAB. Persisted locally.
 - **Araştırma**: real search across Openverse + Wikimedia Commons (no key needed) and YouTube (needs the user's own free API key). Saving downloads the file into the save folder — videos keep their thumbnail plus the link — and attaches it to the chosen Plan Ağacı phase, where it shows up under that phase's Araştırmalar/Medya tabs.
 - **Öğrenme**: real spaced repetition (SM-2 in `shared/sm2.ts`). Decks per topic (dil / programlama), Zor/Orta/Kolay grading that moves each card's interval and ease factor, a due queue that refills by date, and streak / mastery / 5-week heatmap computed from the actual review log. "Kart üret" asks the selected engine for cards on a topic and adds them to the deck.
 
-Not yet built: local Whisper listening, "100% PC control", web research + save-to-disk, Supabase/Firebase shared backend, spaced-repetition engine, wake-word.
+Not yet built: local Whisper listening, Supabase/Firebase shared backend, global wake-word.
 
 ## Architecture notes
 
