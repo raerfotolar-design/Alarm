@@ -39,6 +39,10 @@ export function SettingsModal({ settings, onSave, onClose }: SettingsModalProps)
   const [whisperPath, setWhisperPath] = useState('');
   const [whisperModelPath, setWhisperModelPath] = useState('');
   const [hotkey, setHotkey] = useState('');
+  const [syncEnabled, setSyncEnabled] = useState(false);
+  const [supabaseUrl, setSupabaseUrl] = useState('');
+  const [supabaseKey, setSupabaseKey] = useState('');
+  const [syncSpace, setSyncSpace] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -51,6 +55,9 @@ export function SettingsModal({ settings, onSave, onClose }: SettingsModalProps)
     setWhisperPath(settings.whisperPath);
     setWhisperModelPath(settings.whisperModelPath);
     setHotkey(settings.hotkey);
+    setSyncEnabled(settings.syncEnabled);
+    setSupabaseUrl(settings.supabaseUrl);
+    setSyncSpace(settings.syncSpace);
   }, [settings]);
 
   const save = async () => {
@@ -64,13 +71,18 @@ export function SettingsModal({ settings, onSave, onClose }: SettingsModalProps)
       whisperPath,
       whisperModelPath,
       hotkey,
+      syncEnabled,
+      supabaseUrl,
+      syncSpace,
     };
+    if (supabaseKey.trim()) patch.supabaseAnonKey = supabaseKey.trim();
     if (geminiKey.trim()) patch.geminiApiKey = geminiKey.trim();
     if (youtubeKey.trim()) patch.youtubeApiKey = youtubeKey.trim();
     await onSave(patch);
     setSaving(false);
     setGeminiKey('');
     setYoutubeKey('');
+    setSupabaseKey('');
     onClose();
   };
 
@@ -242,6 +254,54 @@ export function SettingsModal({ settings, onSave, onClose }: SettingsModalProps)
               </span>
             </span>
           </label>
+        </div>
+
+        <div
+          style={{
+            marginBottom: 24,
+            padding: 14,
+            borderRadius: 12,
+            background: syncEnabled ? 'rgba(45,212,234,0.06)' : 'var(--surface-alt)',
+            border: `1px solid ${syncEnabled ? 'rgba(45,212,234,0.4)' : 'var(--border)'}`,
+          }}
+        >
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', marginBottom: 12 }}>
+            <input
+              type="checkbox"
+              checked={syncEnabled}
+              onChange={(e) => setSyncEnabled(e.target.checked)}
+              style={{ marginTop: 2 }}
+            />
+            <span>
+              <span style={{ fontSize: 12.5, fontWeight: 700, display: 'block', marginBottom: 4 }}>
+                Bulut eşitleme (Supabase)
+              </span>
+              <span style={{ fontSize: 10.5, color: 'var(--text-dim)', lineHeight: 1.5 }}>
+                Notlar, plan ağacı, hafıza, kayıtlar ve öğrenme desteleri cihazlar arasında ortak olur.
+                Sohbet geçmişi cihazda kalır. Açılışta buluttan alınır, sonraki değişiklikler yüklenir.
+              </span>
+            </span>
+          </label>
+
+          <input
+            value={supabaseUrl}
+            onChange={(e) => setSupabaseUrl(e.target.value)}
+            placeholder="https://xxxx.supabase.co"
+            style={{ ...inputStyle, marginBottom: 8 }}
+          />
+          <input
+            type="password"
+            value={supabaseKey}
+            onChange={(e) => setSupabaseKey(e.target.value)}
+            placeholder={settings?.hasSupabaseKey ? '•••••••• (anon key kayıtlı)' : 'anon key'}
+            style={{ ...inputStyle, marginBottom: 8 }}
+          />
+          <input
+            value={syncSpace}
+            onChange={(e) => setSyncSpace(e.target.value)}
+            placeholder="ortak alan adı (aynı adı kullananlar aynı veriyi görür)"
+            style={inputStyle}
+          />
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>

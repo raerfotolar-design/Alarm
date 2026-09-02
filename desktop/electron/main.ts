@@ -8,11 +8,13 @@ import { transcribe } from './stt';
 import { openExternal, saveResult, search } from './research';
 import { handleMediaProtocol, registerMediaScheme } from './mediaProtocol';
 import { executeApprovedAction } from './pc';
+import { pullState, pushState } from './sync';
 import {
   AI_CHANNELS,
   PC_CHANNELS,
   RESEARCH_CHANNELS,
   STT_CHANNELS,
+  SYNC_CHANNELS,
   SETTINGS_CHANNELS,
   STORE_CHANNELS,
   type AppState,
@@ -91,6 +93,14 @@ ipcMain.handle(AI_CHANNELS.generateCards, async (_event, request: GenerateCardsR
 
 ipcMain.handle(AI_CHANNELS.extractNotes, async (_event, request: ExtractNotesRequest) => {
   return handleExtractNotes(request);
+});
+
+ipcMain.handle(SYNC_CHANNELS.push, async (_event, state: AppState) => {
+  return pushState(state);
+});
+
+ipcMain.handle(SYNC_CHANNELS.pull, async () => {
+  return pullState();
 });
 
 ipcMain.handle(STT_CHANNELS.transcribe, async (_event, wav: Uint8Array) => {

@@ -5,9 +5,11 @@ interface TopbarProps {
   tab: TabId;
   aiEngine: AiEngine;
   onEngineChange: (engine: AiEngine) => void;
+  /** Last cloud-sync outcome, shown quietly next to the engine switch. */
+  syncNote?: string;
 }
 
-export function Topbar({ tab, aiEngine, onEngineChange }: TopbarProps) {
+export function Topbar({ tab, aiEngine, onEngineChange, syncNote }: TopbarProps) {
   return (
     <div
       style={{
@@ -24,6 +26,11 @@ export function Topbar({ tab, aiEngine, onEngineChange }: TopbarProps) {
         {TAB_LABELS[tab]}
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        {syncNote && (
+          <span style={{ fontSize: 10.5, color: 'var(--text-dim)', maxWidth: 260, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {syncNote}
+          </span>
+        )}
         <div
           style={{
             display: 'flex',

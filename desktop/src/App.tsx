@@ -10,6 +10,7 @@ import type { TabId } from './tabs';
 import type { ListeningNote } from '../shared/types';
 import { gradeCard, isoDate, newCard } from '../shared/sm2';
 import { useListening } from './audio/useListening';
+import { mergeSynced } from './sync';
 import type {
   AiEngine,
   AppState,
@@ -48,6 +49,9 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [pendingAction, setPendingAction] = useState<PendingPcAction | null>(null);
+  const [syncNote, setSyncNote] = useState('');
+  const syncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const syncReady = useRef(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -56,13 +60,25 @@ export default function App() {
         setState(FALLBACK_STATE);
         return;
       }
-      setState(await window.jarvisDesktop.loadState());
+      const local = await window.jarvisDesktop.loadState();
       try {
         setSettings(await window.jarvisDesktop.getSettings());
       } catch {
         // Settings are optional for rendering; the modal just opens with defaults.
         setSettings(null);
       }
+
+      // Pull before the first push, so a device that has been offline adopts the
+      // shared state instead of overwriting it with its own stale copy.
+      const pulled = await window.jarvisDesktop.pullSync();
+      if (pulled.ok && pulled.state) {
+        setState(mergeSynced(local, pulled.state));
+        setSyncNote('Buluttan alındı');
+      } else {
+        setState(local);
+        if (!pulled.ok && !pulled.error.includes('kapalı')) setSyncNote(pulled.error);
+      }
+      syncReady.current = true;
     })();
   }, []);
 
@@ -74,6 +90,19 @@ export default function App() {
       setState((s) => (s ? { ...s, listeningMode: { ...s.listeningMode, jarvis: true } } : s));
     });
   }, []);
+
+  useEffect(() => {
+    if (!state || !hasBridge() || !syncReady.current) return;
+    if (syncTimer.current) clearTimeout(syncTimer.current);
+    syncTimer.current = setTimeout(async () => {
+      const res = await window.jarvisDesktop.pushSync(state);
+      if (res.ok) setSyncNote(`Eşitlendi ${new Date(res.updatedAt).toLocaleTimeString('tr-TR')}`);
+      else if (!res.error.includes('kapalı')) setSyncNote(res.error);
+    }, 4000);
+    return () => {
+      if (syncTimer.current) clearTimeout(syncTimer.current);
+    };
+  }, [state]);
 
   useEffect(() => {
     if (!state || !hasBridge()) return;
@@ -261,7 +290,7 @@ export default function App() {
     <div style={{ width: '100vw', height: '100vh', display: 'flex', background: 'var(--bg)', color: 'var(--text)', overflow: 'hidden' }}>
       <Sidebar active={tab} onSelect={setTab} onOpenSettings={() => setSettingsOpen(true)} />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        <Topbar tab={tab} aiEngine={state.aiEngine} onEngineChange={onEngineChange} />
+        <Topbar tab={tab} aiEngine={state.aiEngine} onEngineChange={onEngineChange} syncNote={syncNote} />
         {tab === 'jarvis' && (
           <JarvisScreen
             messages={state.chatMessages}

@@ -7,6 +7,8 @@ import type {
   ExtractNotesRequest,
   ExtractNotesResponse,
   PcExecuteResponse,
+  SyncPullResponse,
+  SyncPushResponse,
   TranscribeResponse,
   PendingPcAction,
   PublicSettings,
@@ -25,6 +27,8 @@ declare global {
       updateSettings: (patch: SettingsPatch) => Promise<PublicSettings>;
       sendChat: (request: ChatRequest) => Promise<ChatResponse>;
       generateCards: (request: GenerateCardsRequest) => Promise<GenerateCardsResponse>;
+      pushSync: (state: AppState) => Promise<SyncPushResponse>;
+      pullSync: () => Promise<SyncPullResponse>;
       onSummon: (callback: () => void) => () => void;
       transcribe: (wav: Uint8Array) => Promise<TranscribeResponse>;
       extractNotes: (request: ExtractNotesRequest) => Promise<ExtractNotesResponse>;

@@ -81,6 +81,21 @@ export type PcExecuteResponse = { ok: true; output: string } | { ok: false; erro
 
 export type TranscribeResponse = { ok: true; text: string } | { ok: false; error: string };
 
+/** The parts of the app that are shared between devices — chat history stays local. */
+export interface SyncedState {
+  listeningNotes: ListeningNote[];
+  planPhases: PlanPhase[];
+  memory: JarvisMemory;
+  savedResearch: SavedResearchItem[];
+  learning: LearningState;
+}
+
+export type SyncPushResponse = { ok: true; updatedAt: string } | { ok: false; error: string };
+
+export type SyncPullResponse =
+  | { ok: true; state: SyncedState | null; updatedAt: string | null }
+  | { ok: false; error: string };
+
 export interface ExtractNotesRequest {
   engine: AiEngine;
   transcript: string;
@@ -171,6 +186,10 @@ export interface PublicSettings {
   hotkey: string;
   /** False when another program already owns the accelerator. */
   hotkeyRegistered: boolean;
+  syncEnabled: boolean;
+  supabaseUrl: string;
+  hasSupabaseKey: boolean;
+  syncSpace: string;
 }
 
 export interface SettingsPatch {
@@ -185,6 +204,10 @@ export interface SettingsPatch {
   whisperPath?: string;
   whisperModelPath?: string;
   hotkey?: string;
+  syncEnabled?: boolean;
+  supabaseUrl?: string;
+  supabaseAnonKey?: string | null;
+  syncSpace?: string;
 }
 
 export interface ChatRequest {
@@ -227,6 +250,11 @@ export const PC_CHANNELS = {
 export const APP_EVENTS = {
   /** Main → renderer: the global hotkey was pressed. */
   summon: 'app:summon',
+} as const;
+
+export const SYNC_CHANNELS = {
+  push: 'sync:push',
+  pull: 'sync:pull',
 } as const;
 
 export const STT_CHANNELS = {

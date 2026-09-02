@@ -24,14 +24,34 @@ Design reference: https://claude.ai/code/artifact/0592fc1f-ea80-473d-a4be-354d5d
   - Neither engine's native function-calling is used, so it works identically on Gemini and any Ollama model: the model answers with a `{"action": ...}` block, which `electron/pc/protocol.ts` parses out and never shows to the user.
   - The main process re-checks the switch and the tool name on every execution, so an approval-shaped message cannot run anything on its own.
 - **Dinleme Modu**: real passive listening. The microphone is captured in the renderer and encoded to 16 kHz mono WAV in-process (`src/audio/recorder.ts`) — no ffmpeg needed — in 12-second segments, and silent segments are dropped before they cost anything. Each segment is transcribed by a **local whisper.cpp** build (paths set in Settings), so audio never leaves the machine. The transcript is distilled into at most three notes, and saying **"Jarvis konuş"** ends the silence: whatever follows the phrase is sent to Jarvis as a message. Without a configured whisper binary the bar says so instead of failing quietly.
+- **Global hotkey**: Ctrl/Cmd+Shift+J (configurable) brings the window forward from any app, opens the Jarvis tab and starts listening. Settings warns in red when another program already owns the combination.
+- **Cloud sync** (Supabase, off by default): notes, plan tree, memory, saved research and learning decks are shared between devices; chat history stays local. The app pulls at startup before it starts pushing, so a device that has been offline adopts the shared state instead of overwriting it. Writes are last-write-wins on the whole document — the honest trade for a personal app with a couple of devices.
 - **Settings** (sidebar gear): Gemini and YouTube API keys, model names, Ollama URL, save folder, PC-control switch. Keys are encrypted with Electron's `safeStorage` and never sent back to the renderer.
 - **Planlama**: real Plan Ağacı data model — phases, progress, possibilities (toggleable), per-phase notes, add-phase FAB. Persisted locally.
 - **Araştırma**: real search across Openverse + Wikimedia Commons (no key needed) and YouTube (needs the user's own free API key). Saving downloads the file into the save folder — videos keep their thumbnail plus the link — and attaches it to the chosen Plan Ağacı phase, where it shows up under that phase's Araştırmalar/Medya tabs.
 - **Öğrenme**: real spaced repetition (SM-2 in `shared/sm2.ts`). Decks per topic (dil / programlama), Zor/Orta/Kolay grading that moves each card's interval and ease factor, a due queue that refills by date, and streak / mastery / 5-week heatmap computed from the actual review log. "Kart üret" asks the selected engine for cards on a topic and adds them to the deck.
 
-Not yet built: Supabase/Firebase shared backend, global wake-word.
+Not yet built: a wake word (the global hotkey covers summoning for now), and the phone app's side of cloud sync — the desktop reads and writes the shared table, but `../src` (the Expo app) has not been wired to it yet.
 
 Listening mode needs whisper.cpp installed separately (build it, download a `ggml-*.bin` model, then point Settings at both). The microphone path itself could not be exercised in the development container — the transcription, note-extraction, trigger-detection and WAV-encoding paths are covered by tests, but recording from a real device is unverified until you run it.
+
+## Cloud sync setup
+
+Create a free Supabase project, then run this once in its SQL editor:
+
+```sql
+create table jarvis_state (
+  id text primary key,
+  payload jsonb not null,
+  updated_at timestamptz not null default now()
+);
+alter table jarvis_state enable row level security;
+-- Personal project: the anon key is the only credential, so keep it to yourself.
+create policy "anon full access" on jarvis_state for all using (true) with check (true);
+```
+
+Then in Settings turn on cloud sync and fill in the project URL, the anon key and a
+space name. Devices using the same space name see the same data.
 
 ## Architecture notes
 

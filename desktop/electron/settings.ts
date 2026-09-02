@@ -19,6 +19,11 @@ interface StoredSettings {
   whisperPath: string;
   whisperModelPath: string;
   hotkey: string;
+  syncEnabled: boolean;
+  supabaseUrl: string;
+  supabaseAnonKey: string;
+  supabaseAnonKeyEncrypted: boolean;
+  syncSpace: string;
 }
 
 const DEFAULTS: StoredSettings = {
@@ -34,6 +39,11 @@ const DEFAULTS: StoredSettings = {
   whisperPath: '',
   whisperModelPath: '',
   hotkey: 'CommandOrControl+Shift+J',
+  syncEnabled: false,
+  supabaseUrl: '',
+  supabaseAnonKey: '',
+  supabaseAnonKeyEncrypted: false,
+  syncSpace: 'ortak',
 };
 
 function settingsPath(): string {
@@ -68,6 +78,10 @@ export async function getPublicSettings(): Promise<PublicSettings> {
     whisperModelPath: stored.whisperModelPath,
     hotkey: stored.hotkey,
     hotkeyRegistered: hotkeyRegistered,
+    syncEnabled: stored.syncEnabled,
+    supabaseUrl: stored.supabaseUrl,
+    hasSupabaseKey: stored.supabaseAnonKey.length > 0,
+    syncSpace: stored.syncSpace,
   };
 }
 
@@ -117,6 +131,14 @@ export async function updateSettings(patch: SettingsPatch): Promise<PublicSettin
   if (patch.whisperPath !== undefined) stored.whisperPath = patch.whisperPath;
   if (patch.whisperModelPath !== undefined) stored.whisperModelPath = patch.whisperModelPath;
   if (patch.hotkey !== undefined) stored.hotkey = patch.hotkey;
+  if (patch.syncEnabled !== undefined) stored.syncEnabled = patch.syncEnabled;
+  if (patch.supabaseUrl !== undefined) stored.supabaseUrl = patch.supabaseUrl;
+  if (patch.syncSpace !== undefined) stored.syncSpace = patch.syncSpace;
+  if (patch.supabaseAnonKey !== undefined) {
+    const encoded = encodeSecret(patch.supabaseAnonKey ?? '');
+    stored.supabaseAnonKey = encoded.value;
+    stored.supabaseAnonKeyEncrypted = encoded.encrypted;
+  }
 
   await writeStored(stored);
   return getPublicSettings();
@@ -128,6 +150,21 @@ export async function getResearchConfig(): Promise<{ youtubeApiKey: string; save
   return {
     youtubeApiKey: decodeSecret(stored.youtubeApiKey, stored.youtubeApiKeyEncrypted),
     saveFolder: stored.saveFolder,
+  };
+}
+
+export async function getSyncConfig(): Promise<{
+  enabled: boolean;
+  url: string;
+  anonKey: string;
+  space: string;
+}> {
+  const stored = await readStored();
+  return {
+    enabled: stored.syncEnabled,
+    url: stored.supabaseUrl,
+    anonKey: decodeSecret(stored.supabaseAnonKey, stored.supabaseAnonKeyEncrypted),
+    space: stored.syncSpace || 'ortak',
   };
 }
 

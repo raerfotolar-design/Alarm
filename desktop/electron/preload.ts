@@ -5,6 +5,7 @@ import {
   PC_CHANNELS,
   RESEARCH_CHANNELS,
   STT_CHANNELS,
+  SYNC_CHANNELS,
   SETTINGS_CHANNELS,
   STORE_CHANNELS,
   type AppState,
@@ -15,6 +16,8 @@ import {
   type ExtractNotesRequest,
   type ExtractNotesResponse,
   type PcExecuteResponse,
+  type SyncPullResponse,
+  type SyncPushResponse,
   type TranscribeResponse,
   type PendingPcAction,
   type PublicSettings,
@@ -32,6 +35,8 @@ contextBridge.exposeInMainWorld('jarvisDesktop', {
   sendChat: (request: ChatRequest): Promise<ChatResponse> => ipcRenderer.invoke(AI_CHANNELS.chat, request),
   generateCards: (request: GenerateCardsRequest): Promise<GenerateCardsResponse> =>
     ipcRenderer.invoke(AI_CHANNELS.generateCards, request),
+  pushSync: (state: AppState): Promise<SyncPushResponse> => ipcRenderer.invoke(SYNC_CHANNELS.push, state),
+  pullSync: (): Promise<SyncPullResponse> => ipcRenderer.invoke(SYNC_CHANNELS.pull),
   onSummon: (callback: () => void): (() => void) => {
     const listener = () => callback();
     ipcRenderer.on(APP_EVENTS.summon, listener);
