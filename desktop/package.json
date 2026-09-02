@@ -1,0 +1,29 @@
+{
+  "name": "jarvis-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Jarvis Desktop — PC companion app (chat, research, planning, learning)",
+  "main": "dist-electron/electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && tsc -p electron/tsconfig.json",
+    "electron:dev": "concurrently -k \"vite\" \"wait-on tcp:5173 && cross-env NODE_ENV=development electron .\"",
+    "electron:build": "npm run build && electron-builder",
+    "typecheck": "tsc --noEmit && tsc -p electron/tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.5",
+    "@vitejs/plugin-react": "6.1.1",
+    "concurrently": "10.0.5",
+    "cross-env": "10.1.0",
+    "electron": "44.1.1",
+    "typescript": "7.0.2",
+    "vite": "8.2.2",
+    "wait-on": "9.1.0"
+  },
+  "dependencies": {
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  }
+}
