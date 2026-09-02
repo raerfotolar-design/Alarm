@@ -12,6 +12,12 @@ Design reference: https://claude.ai/code/artifact/0592fc1f-ea80-473d-a4be-354d5d
   - *Yerel AI* → Ollama on `http://localhost:11434` (default model `llama3.1:8b`). Start it with `ollama serve`.
   - *Bulut AI* → Gemini REST API (default model `gemini-3.6-flash`), needs an API key.
   - Both share the same Jarvis persona (`electron/ai/persona.ts`) and the last 20 turns of history.
+- **Memory** (`electron/ai/memory.ts`): Jarvis remembers across days, not just the last turns.
+  - Only the last 20 turns fit in a prompt, so older messages are folded into a **rolling summary** plus a list of **durable facts**, both stored on disk and injected into every prompt.
+  - Messages that have left the window but are not summarized yet are still sent verbatim, so nothing is ever in neither the window nor the summary.
+  - Listening-mode notes are injected too, with their dates — that is what makes "you told me this yesterday" work.
+  - The summary refresh costs one extra model call, and only once every 10 messages that age out.
+  - Both are visible in the Jarvis notes panel under "Jarvis'in Hafızası".
 - **Settings** (sidebar gear): Gemini API key + model, Ollama URL + model. The key is encrypted with Electron's `safeStorage` and is never sent back to the renderer.
 - **Planlama**: real Plan Ağacı data model — phases, progress, possibilities (toggleable), per-phase notes, add-phase FAB. Persisted locally.
 - **Araştırma** / **Öğrenme**: UI shells with mock data, not yet wired to real search/spaced-repetition logic.

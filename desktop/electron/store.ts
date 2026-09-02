@@ -2,6 +2,7 @@ import { app } from 'electron';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import type { AppState } from '../shared/types';
+import { emptyMemory } from './ai/memory';
 
 const STORE_FILE = 'jarvis-desktop-state.json';
 
@@ -62,6 +63,7 @@ function defaultState(): AppState {
       },
     ],
     selectedPhaseId: 'faz-2',
+    memory: emptyMemory(),
   };
 }
 

@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { ListeningModeBar } from '../components/ListeningModeBar';
-import type { ChatMessage, ListeningNote } from '../../shared/types';
+import type { ChatMessage, JarvisMemory, ListeningNote } from '../../shared/types';
 
 interface JarvisScreenProps {
   messages: ChatMessage[];
   notes: ListeningNote[];
+  memory: JarvisMemory;
   listening: boolean;
   pending: boolean;
   onToggleListening: () => void;
@@ -15,6 +16,7 @@ interface JarvisScreenProps {
 export function JarvisScreen({
   messages,
   notes,
+  memory,
   listening,
   pending,
   onToggleListening,
@@ -139,6 +141,52 @@ export function JarvisScreen({
               {n.text}
             </div>
           ))}
+
+          {(memory.facts.length > 0 || memory.summary) && (
+            <>
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: 'var(--text-dim)',
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.5,
+                  marginTop: 14,
+                }}
+              >
+                Jarvis'in Hafızası
+              </div>
+              {memory.summary && (
+                <div
+                  style={{
+                    background: 'rgba(139,124,255,0.08)',
+                    border: '1px solid rgba(139,124,255,0.35)',
+                    borderRadius: 10,
+                    padding: 10,
+                    fontSize: 11.5,
+                    color: '#C9C3FF',
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {memory.summary}
+                </div>
+              )}
+              {memory.facts.map((f) => (
+                <div
+                  key={f.id}
+                  style={{
+                    background: 'var(--surface-alt)',
+                    border: '1px solid rgba(45,212,234,0.3)',
+                    borderRadius: 10,
+                    padding: 10,
+                    fontSize: 11.5,
+                  }}
+                >
+                  {f.text}
+                </div>
+              ))}
+            </>
+          )}
         </div>
         <div style={{ padding: 16, display: 'flex', gap: 6 }}>
           <input

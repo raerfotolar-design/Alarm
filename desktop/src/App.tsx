@@ -16,6 +16,7 @@ const FALLBACK_STATE: AppState = {
   listeningNotes: [],
   planPhases: [],
   selectedPhaseId: null,
+  memory: { summary: '', facts: [], summarizedThroughId: null },
 };
 
 function hasBridge(): boolean {
@@ -36,11 +37,16 @@ export default function App() {
 
   useEffect(() => {
     (async () => {
-      if (hasBridge()) {
-        setState(await window.jarvisDesktop.loadState());
-        setSettings(await window.jarvisDesktop.getSettings());
-      } else {
+      if (!hasBridge()) {
         setState(FALLBACK_STATE);
+        return;
+      }
+      setState(await window.jarvisDesktop.loadState());
+      try {
+        setSettings(await window.jarvisDesktop.getSettings());
+      } catch {
+        // Settings are optional for rendering; the modal just opens with defaults.
+        setSettings(null);
       }
     })();
   }, []);
@@ -72,19 +78,25 @@ export default function App() {
     setPending(true);
 
     let replyText: string;
+    let updatedMemory: AppState['memory'] | null = null;
     if (hasBridge()) {
       const res = await window.jarvisDesktop.sendChat({
         engine: state.aiEngine,
         history: historyBeforeSend,
         userText: text,
+        memory: state.memory,
+        notes: state.listeningNotes,
       });
       replyText = res.ok ? res.text : `⚠ ${res.error}`;
+      if (res.ok && res.memory) updatedMemory = res.memory;
     } else {
       replyText = '⚠ Bu görünüm masaüstü uygulaması dışında çalışıyor, AI motoruna erişilemiyor.';
     }
 
     const jarvisMsg: ChatMessage = { id: newId(), role: 'jarvis', text: replyText, createdAt: new Date().toISOString() };
-    setState((s) => (s ? { ...s, chatMessages: [...s.chatMessages, jarvisMsg] } : s));
+    setState((s) =>
+      s ? { ...s, chatMessages: [...s.chatMessages, jarvisMsg], memory: updatedMemory ?? s.memory } : s,
+    );
     setPending(false);
   };
 
@@ -135,6 +147,7 @@ export default function App() {
           <JarvisScreen
             messages={state.chatMessages}
             notes={state.listeningNotes.filter((n) => n.source === 'jarvis')}
+            memory={state.memory}
             listening={state.listeningMode.jarvis}
             pending={pending}
             onToggleListening={() => onToggleListening('jarvis')}

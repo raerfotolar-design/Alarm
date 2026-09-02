@@ -5,9 +5,14 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs');
 const { loadState, saveState } = require('../dist-electron/electron/store.js');
+const { getPublicSettings, updateSettings } = require('../dist-electron/electron/settings.js');
+const { handleChat } = require('../dist-electron/electron/ai/index.js');
 
 ipcMain.handle('store:load', () => loadState());
 ipcMain.handle('store:save', (_e, state) => saveState(state).then(() => true));
+ipcMain.handle('settings:get', () => getPublicSettings());
+ipcMain.handle('settings:set', (_e, patch) => updateSettings(patch));
+ipcMain.handle('ai:chat', (_e, request) => handleChat(request));
 
 app.whenReady().then(async () => {
   const win = new BrowserWindow({

@@ -1,5 +1,4 @@
 import type { ChatMessage } from '../../shared/types';
-import { JARVIS_SYSTEM_PROMPT } from './persona';
 
 interface OllamaResponse {
   message?: { content?: string };
@@ -9,11 +8,12 @@ interface OllamaResponse {
 export async function askOllama(params: {
   baseUrl: string;
   model: string;
+  systemPrompt: string;
   history: ChatMessage[];
   userText: string;
 }): Promise<string> {
   const messages = [
-    { role: 'system', content: JARVIS_SYSTEM_PROMPT },
+    { role: 'system', content: params.systemPrompt },
     ...params.history.map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text })),
     { role: 'user', content: params.userText },
   ];

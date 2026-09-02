@@ -1,5 +1,4 @@
 import type { ChatMessage } from '../../shared/types';
-import { JARVIS_SYSTEM_PROMPT } from './persona';
 
 const API_ROOT = 'https://generativelanguage.googleapis.com/v1beta/models';
 
@@ -11,6 +10,7 @@ interface GeminiResponse {
 export async function askGemini(params: {
   apiKey: string;
   model: string;
+  systemPrompt: string;
   history: ChatMessage[];
   userText: string;
 }): Promise<string> {
@@ -27,7 +27,7 @@ export async function askGemini(params: {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       contents,
-      systemInstruction: { parts: [{ text: JARVIS_SYSTEM_PROMPT }] },
+      systemInstruction: { parts: [{ text: params.systemPrompt }] },
     }),
   });
 

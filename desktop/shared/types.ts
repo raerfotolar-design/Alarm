@@ -31,6 +31,23 @@ export interface PlanPhase {
   researchIds: string[];
 }
 
+export interface MemoryFact {
+  id: string;
+  text: string;
+  createdAt: string;
+}
+
+/**
+ * Long-term memory. Only a window of recent messages fits in a prompt, so anything
+ * older is preserved here instead: durable facts plus a rolling summary of the
+ * conversation up to `summarizedThroughId`.
+ */
+export interface JarvisMemory {
+  summary: string;
+  facts: MemoryFact[];
+  summarizedThroughId: string | null;
+}
+
 export interface AppState {
   aiEngine: AiEngine;
   listeningMode: {
@@ -42,6 +59,7 @@ export interface AppState {
   listeningNotes: ListeningNote[];
   planPhases: PlanPhase[];
   selectedPhaseId: string | null;
+  memory: JarvisMemory;
 }
 
 /** Settings as the renderer sees them — the Gemini key itself never leaves the main process. */
@@ -62,11 +80,16 @@ export interface SettingsPatch {
 
 export interface ChatRequest {
   engine: AiEngine;
+  /** The full conversation — the main process decides what fits in the prompt and what gets summarized. */
   history: ChatMessage[];
   userText: string;
+  memory: JarvisMemory;
+  notes: ListeningNote[];
 }
 
-export type ChatResponse = { ok: true; text: string } | { ok: false; error: string };
+export type ChatResponse =
+  /** `memory` is present only when this turn produced an updated summary or new facts. */
+  { ok: true; text: string; memory?: JarvisMemory } | { ok: false; error: string };
 
 export const STORE_CHANNELS = {
   load: 'store:load',
