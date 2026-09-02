@@ -5,6 +5,7 @@ import type { TabId } from '../tabs';
 interface SidebarProps {
   active: TabId;
   onSelect: (tab: TabId) => void;
+  onOpenSettings: () => void;
 }
 
 const items: { id: TabId; icon: (active: boolean) => ReactElement }[] = [
@@ -14,7 +15,7 @@ const items: { id: TabId; icon: (active: boolean) => ReactElement }[] = [
   { id: 'ogrenme', icon: (a) => <DocumentIcon color={a ? '#2DD4EA' : '#7C8DA6'} /> },
 ];
 
-export function Sidebar({ active, onSelect }: SidebarProps) {
+export function Sidebar({ active, onSelect, onOpenSettings }: SidebarProps) {
   return (
     <div
       style={{
@@ -72,6 +73,7 @@ export function Sidebar({ active, onSelect }: SidebarProps) {
       </div>
 
       <button
+        onClick={onOpenSettings}
         style={{
           width: 44,
           height: 44,

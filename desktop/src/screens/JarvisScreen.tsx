@@ -6,19 +6,17 @@ interface JarvisScreenProps {
   messages: ChatMessage[];
   notes: ListeningNote[];
   listening: boolean;
+  pending: boolean;
   onToggleListening: () => void;
   onSendMessage: (text: string) => void;
   onAddNote: (text: string) => void;
-}
-
-function jarvisPlaceholderReply(userText: string): string {
-  return `("${userText}" için henüz gerçek bir AI motoruna bağlı değilim — bu bir yer tutucu yanıt.)`;
 }
 
 export function JarvisScreen({
   messages,
   notes,
   listening,
+  pending,
   onToggleListening,
   onSendMessage,
   onAddNote,
@@ -28,7 +26,7 @@ export function JarvisScreen({
 
   const submit = () => {
     const text = draft.trim();
-    if (!text) return;
+    if (!text || pending) return;
     onSendMessage(text);
     setDraft('');
   };
@@ -75,6 +73,21 @@ export function JarvisScreen({
               {m.text}
             </div>
           ))}
+          {pending && (
+            <div
+              style={{
+                alignSelf: 'flex-start',
+                background: 'var(--surface)',
+                border: '1px solid var(--border)',
+                borderRadius: 14,
+                padding: '10px 14px',
+                fontSize: 13,
+                color: 'var(--text-dim)',
+              }}
+            >
+              Jarvis düşünüyor...
+            </div>
+          )}
         </div>
 
         <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
@@ -96,6 +109,7 @@ export function JarvisScreen({
           />
           <button
             onClick={submit}
+            disabled={pending}
             style={{
               padding: '0 22px',
               borderRadius: 12,
@@ -104,6 +118,7 @@ export function JarvisScreen({
               color: '#03141A',
               fontWeight: 700,
               fontSize: 13,
+              opacity: pending ? 0.5 : 1,
             }}
           >
             Gönder
@@ -147,5 +162,3 @@ export function JarvisScreen({
     </div>
   );
 }
-
-export { jarvisPlaceholderReply };

@@ -1,7 +1,16 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'node:path';
 import { loadState, saveState } from './store';
-import { STORE_CHANNELS, type AppState } from '../shared/types';
+import { getPublicSettings, updateSettings } from './settings';
+import { handleChat } from './ai';
+import {
+  AI_CHANNELS,
+  SETTINGS_CHANNELS,
+  STORE_CHANNELS,
+  type AppState,
+  type ChatRequest,
+  type SettingsPatch,
+} from '../shared/types';
 
 const isDev = process.env.NODE_ENV === 'development';
 
@@ -36,6 +45,18 @@ ipcMain.handle(STORE_CHANNELS.load, async () => {
 ipcMain.handle(STORE_CHANNELS.save, async (_event, state: AppState) => {
   await saveState(state);
   return true;
+});
+
+ipcMain.handle(SETTINGS_CHANNELS.get, async () => {
+  return getPublicSettings();
+});
+
+ipcMain.handle(SETTINGS_CHANNELS.set, async (_event, patch: SettingsPatch) => {
+  return updateSettings(patch);
+});
+
+ipcMain.handle(AI_CHANNELS.chat, async (_event, request: ChatRequest) => {
+  return handleChat(request);
 });
 
 app.whenReady().then(() => {

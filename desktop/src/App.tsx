@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Topbar } from './components/Topbar';
-import { JarvisScreen, jarvisPlaceholderReply } from './screens/JarvisScreen';
+import { JarvisScreen } from './screens/JarvisScreen';
+import { SettingsModal } from './components/SettingsModal';
 import { ArastirmaScreen } from './screens/ArastirmaScreen';
 import { PlanlamaScreen } from './screens/PlanlamaScreen';
 import { OgrenmeScreen } from './screens/OgrenmeScreen';
 import type { TabId } from './tabs';
-import type { AiEngine, AppState } from '../shared/types';
+import type { AiEngine, AppState, ChatMessage, PublicSettings, SettingsPatch } from '../shared/types';
 
 const FALLBACK_STATE: AppState = {
   aiEngine: 'cloud',
@@ -28,12 +29,16 @@ function newId(): string {
 export default function App() {
   const [tab, setTab] = useState<TabId>('jarvis');
   const [state, setState] = useState<AppState | null>(null);
+  const [settings, setSettings] = useState<PublicSettings | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [pending, setPending] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     (async () => {
       if (hasBridge()) {
         setState(await window.jarvisDesktop.loadState());
+        setSettings(await window.jarvisDesktop.getSettings());
       } else {
         setState(FALLBACK_STATE);
       }
@@ -60,15 +65,32 @@ export default function App() {
   const onToggleListening = (key: keyof AppState['listeningMode']) =>
     update({ listeningMode: { ...state.listeningMode, [key]: !state.listeningMode[key] } });
 
-  const onSendMessage = (text: string) => {
-    const userMsg = { id: newId(), role: 'user' as const, text, createdAt: new Date().toISOString() };
-    const jarvisMsg = {
-      id: newId(),
-      role: 'jarvis' as const,
-      text: jarvisPlaceholderReply(text),
-      createdAt: new Date().toISOString(),
-    };
-    update({ chatMessages: [...state.chatMessages, userMsg, jarvisMsg] });
+  const onSendMessage = async (text: string) => {
+    const historyBeforeSend = state.chatMessages;
+    const userMsg: ChatMessage = { id: newId(), role: 'user', text, createdAt: new Date().toISOString() };
+    setState((s) => (s ? { ...s, chatMessages: [...s.chatMessages, userMsg] } : s));
+    setPending(true);
+
+    let replyText: string;
+    if (hasBridge()) {
+      const res = await window.jarvisDesktop.sendChat({
+        engine: state.aiEngine,
+        history: historyBeforeSend,
+        userText: text,
+      });
+      replyText = res.ok ? res.text : `⚠ ${res.error}`;
+    } else {
+      replyText = '⚠ Bu görünüm masaüstü uygulaması dışında çalışıyor, AI motoruna erişilemiyor.';
+    }
+
+    const jarvisMsg: ChatMessage = { id: newId(), role: 'jarvis', text: replyText, createdAt: new Date().toISOString() };
+    setState((s) => (s ? { ...s, chatMessages: [...s.chatMessages, jarvisMsg] } : s));
+    setPending(false);
+  };
+
+  const onSaveSettings = async (patch: SettingsPatch) => {
+    if (!hasBridge()) return;
+    setSettings(await window.jarvisDesktop.updateSettings(patch));
   };
 
   const onAddNote = (text: string) =>
@@ -106,7 +128,7 @@ export default function App() {
 
   return (
     <div style={{ width: '100vw', height: '100vh', display: 'flex', background: 'var(--bg)', color: 'var(--text)', overflow: 'hidden' }}>
-      <Sidebar active={tab} onSelect={setTab} />
+      <Sidebar active={tab} onSelect={setTab} onOpenSettings={() => setSettingsOpen(true)} />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         <Topbar tab={tab} aiEngine={state.aiEngine} onEngineChange={onEngineChange} />
         {tab === 'jarvis' && (
@@ -114,6 +136,7 @@ export default function App() {
             messages={state.chatMessages}
             notes={state.listeningNotes.filter((n) => n.source === 'jarvis')}
             listening={state.listeningMode.jarvis}
+            pending={pending}
             onToggleListening={() => onToggleListening('jarvis')}
             onSendMessage={onSendMessage}
             onAddNote={onAddNote}
@@ -136,6 +159,9 @@ export default function App() {
         )}
         {tab === 'ogrenme' && <OgrenmeScreen />}
       </div>
+      {settingsOpen && (
+        <SettingsModal settings={settings} onSave={onSaveSettings} onClose={() => setSettingsOpen(false)} />
+      )}
     </div>
   );
 }
