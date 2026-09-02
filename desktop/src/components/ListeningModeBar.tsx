@@ -4,9 +4,18 @@ interface ListeningModeBarProps {
   active: boolean;
   onToggle: () => void;
   label?: string;
+  /** Live state of the microphone loop, when this bar owns it. */
+  status?: { state: 'off' | 'starting' | 'listening' | 'processing' | 'error'; lastTranscript: string; error: string };
 }
 
-export function ListeningModeBar({ active, onToggle, label }: ListeningModeBarProps) {
+const STATE_LABEL: Record<string, string> = {
+  starting: 'Mikrofon açılıyor...',
+  listening: 'Dinliyor',
+  processing: 'Duyduğunu yazıya çeviriyor...',
+};
+
+export function ListeningModeBar({ active, onToggle, label, status }: ListeningModeBarProps) {
+  const statusText = status && status.state !== 'off' && status.state !== 'error' ? STATE_LABEL[status.state] : '';
   return (
     <div
       style={{
@@ -35,8 +44,30 @@ export function ListeningModeBar({ active, onToggle, label }: ListeningModeBarPr
         >
           <MicIcon color={active ? '#8B7CFF' : '#7C8DA6'} />
         </div>
-        <div style={{ fontSize: 12.5, color: active ? '#C9C3FF' : 'var(--text-dim)' }}>
-          {label ?? (active ? 'Dinleme Modu açık — sessizce not alınıyor' : 'Dinleme Modu kapalı')}
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 12.5, color: active ? '#C9C3FF' : 'var(--text-dim)' }}>
+            {label ?? (active ? 'Dinleme Modu açık — sessizce not alınıyor' : 'Dinleme Modu kapalı')}
+          </div>
+          {status?.state === 'error' ? (
+            <div style={{ fontSize: 10.5, color: '#F87171', marginTop: 3 }}>{status.error}</div>
+          ) : (
+            (statusText || status?.lastTranscript) && (
+              <div
+                style={{
+                  fontSize: 10.5,
+                  color: 'var(--text-dim)',
+                  marginTop: 3,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  maxWidth: 620,
+                }}
+              >
+                {statusText}
+                {status?.lastTranscript ? ` · "${status.lastTranscript}"` : ''}
+              </div>
+            )
+          )}
         </div>
       </div>
       <button

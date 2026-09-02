@@ -1,3 +1,4 @@
+import type React from 'react';
 import { useState } from 'react';
 import { ListeningModeBar } from '../components/ListeningModeBar';
 import { PlusIcon } from '../icons';
@@ -9,6 +10,7 @@ interface PlanlamaScreenProps {
   selectedPhaseId: string | null;
   savedResearch: SavedResearchItem[];
   listening: boolean;
+  listeningStatus?: React.ComponentProps<typeof ListeningModeBar>['status'];
   onToggleListening: () => void;
   onSelectPhase: (id: string) => void;
   onTogglePossibility: (phaseId: string, possibilityId: string) => void;
@@ -23,6 +25,7 @@ export function PlanlamaScreen({
   selectedPhaseId,
   savedResearch,
   listening,
+  listeningStatus,
   onToggleListening,
   onSelectPhase,
   onTogglePossibility,
@@ -48,6 +51,7 @@ export function PlanlamaScreen({
       <div style={{ flex: 1, position: 'relative', overflow: 'auto', padding: '20px 24px', minWidth: 0 }}>
         <ListeningModeBar
           active={listening}
+          status={listeningStatus}
           onToggle={onToggleListening}
           label={listening ? 'Dinleme Modu açık — beyin fırtınası notları alınıyor' : 'Dinleme Modu kapalı'}
         />

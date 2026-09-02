@@ -79,6 +79,18 @@ export interface PendingPcAction {
 
 export type PcExecuteResponse = { ok: true; output: string } | { ok: false; error: string };
 
+export type TranscribeResponse = { ok: true; text: string } | { ok: false; error: string };
+
+export interface ExtractNotesRequest {
+  engine: AiEngine;
+  transcript: string;
+}
+
+/** `triggered` means the user said "Jarvis konuş" — `message` is what to ask Jarvis. */
+export type ExtractNotesResponse =
+  | { ok: true; notes: string[]; triggered: boolean; message: string }
+  | { ok: false; error: string };
+
 export type LearningTopic = 'dil' | 'programlama';
 export type ReviewGrade = 'zor' | 'orta' | 'kolay';
 
@@ -154,6 +166,8 @@ export interface PublicSettings {
   ollamaModel: string;
   saveFolder: string;
   pcControlEnabled: boolean;
+  whisperPath: string;
+  whisperModelPath: string;
 }
 
 export interface SettingsPatch {
@@ -165,6 +179,8 @@ export interface SettingsPatch {
   ollamaModel?: string;
   saveFolder?: string;
   pcControlEnabled?: boolean;
+  whisperPath?: string;
+  whisperModelPath?: string;
 }
 
 export interface ChatRequest {
@@ -192,6 +208,7 @@ export const STORE_CHANNELS = {
 export const AI_CHANNELS = {
   chat: 'ai:chat',
   generateCards: 'ai:generateCards',
+  extractNotes: 'ai:extractNotes',
 } as const;
 
 export const SETTINGS_CHANNELS = {
@@ -201,6 +218,10 @@ export const SETTINGS_CHANNELS = {
 
 export const PC_CHANNELS = {
   execute: 'pc:execute',
+} as const;
+
+export const STT_CHANNELS = {
+  transcribe: 'stt:transcribe',
 } as const;
 
 export const RESEARCH_CHANNELS = {

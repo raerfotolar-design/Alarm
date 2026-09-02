@@ -3,6 +3,8 @@ import type {
   ChatRequest,
   ChatResponse,
   GenerateCardsRequest,
+  ExtractNotesRequest,
+  ExtractNotesResponse,
   GenerateCardsResponse,
   JarvisMemory,
   PendingPcAction,
@@ -22,6 +24,7 @@ import {
 } from './memory';
 
 import { buildCardPrompt, parseCards } from './cards';
+import { buildNotePrompt, findTrigger, parseNotes, worthExtracting } from './notes';
 import { PC_TOOLS_INSTRUCTION, parseAction } from '../pc/protocol';
 import { describeAction, needsConfirmation, runTool } from '../pc/tools';
 
@@ -103,6 +106,38 @@ export async function handleGenerateCards(request: GenerateCardsRequest): Promis
     return { ok: true, cards };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : 'Kartlar üretilemedi.' };
+  }
+}
+
+/**
+ * Turns one segment of overheard speech into notes, and reports whether the user
+ * asked Jarvis to speak up. Note extraction failing is never fatal — the trigger
+ * still gets through, because that is the part the user is waiting on.
+ */
+export async function handleExtractNotes(request: ExtractNotesRequest): Promise<ExtractNotesResponse> {
+  const transcript = request.transcript.trim();
+  const trigger = findTrigger(transcript);
+
+  if (!worthExtracting(transcript)) {
+    return { ok: true, notes: [], triggered: trigger.triggered, message: trigger.message };
+  }
+
+  const config = await getAiConfig();
+  if (request.engine === 'cloud' && !config.geminiApiKey) {
+    return { ok: true, notes: [], triggered: trigger.triggered, message: trigger.message };
+  }
+
+  try {
+    const raw = await ask(
+      request.engine,
+      config,
+      'Sen bir not çıkarıcısın. Sadece istenen JSON formatında cevap ver.',
+      [],
+      buildNotePrompt(transcript),
+    );
+    return { ok: true, notes: parseNotes(raw), triggered: trigger.triggered, message: trigger.message };
+  } catch {
+    return { ok: true, notes: [], triggered: trigger.triggered, message: trigger.message };
   }
 }
 

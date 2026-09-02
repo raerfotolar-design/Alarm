@@ -16,6 +16,8 @@ interface StoredSettings {
   ollamaModel: string;
   saveFolder: string;
   pcControlEnabled: boolean;
+  whisperPath: string;
+  whisperModelPath: string;
 }
 
 const DEFAULTS: StoredSettings = {
@@ -28,6 +30,8 @@ const DEFAULTS: StoredSettings = {
   ollamaModel: 'llama3.1:8b',
   saveFolder: '',
   pcControlEnabled: false,
+  whisperPath: '',
+  whisperModelPath: '',
 };
 
 function settingsPath(): string {
@@ -58,6 +62,8 @@ export async function getPublicSettings(): Promise<PublicSettings> {
     ollamaModel: stored.ollamaModel,
     saveFolder: stored.saveFolder,
     pcControlEnabled: stored.pcControlEnabled,
+    whisperPath: stored.whisperPath,
+    whisperModelPath: stored.whisperModelPath,
   };
 }
 
@@ -98,6 +104,8 @@ export async function updateSettings(patch: SettingsPatch): Promise<PublicSettin
   if (patch.ollamaModel !== undefined) stored.ollamaModel = patch.ollamaModel;
   if (patch.saveFolder !== undefined) stored.saveFolder = patch.saveFolder;
   if (patch.pcControlEnabled !== undefined) stored.pcControlEnabled = patch.pcControlEnabled;
+  if (patch.whisperPath !== undefined) stored.whisperPath = patch.whisperPath;
+  if (patch.whisperModelPath !== undefined) stored.whisperModelPath = patch.whisperModelPath;
 
   await writeStored(stored);
   return getPublicSettings();
@@ -110,6 +118,11 @@ export async function getResearchConfig(): Promise<{ youtubeApiKey: string; save
     youtubeApiKey: decodeSecret(stored.youtubeApiKey, stored.youtubeApiKeyEncrypted),
     saveFolder: stored.saveFolder,
   };
+}
+
+export async function getSttConfig(): Promise<{ whisperPath: string; whisperModelPath: string }> {
+  const stored = await readStored();
+  return { whisperPath: stored.whisperPath, whisperModelPath: stored.whisperModelPath };
 }
 
 /** Main-process only — the decrypted key must never be sent to the renderer. */

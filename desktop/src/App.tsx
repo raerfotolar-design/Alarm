@@ -7,7 +7,9 @@ import { ArastirmaScreen } from './screens/ArastirmaScreen';
 import { PlanlamaScreen } from './screens/PlanlamaScreen';
 import { OgrenmeScreen } from './screens/OgrenmeScreen';
 import type { TabId } from './tabs';
+import type { ListeningNote } from '../shared/types';
 import { gradeCard, isoDate, newCard } from '../shared/sm2';
+import { useListening } from './audio/useListening';
 import type {
   AiEngine,
   AppState,
@@ -74,6 +76,23 @@ export default function App() {
       if (saveTimer.current) clearTimeout(saveTimer.current);
     };
   }, [state]);
+
+  const listeningSource: ListeningNote['source'] | null = state
+    ? state.listeningMode.jarvis
+      ? 'jarvis'
+      : state.listeningMode.arastirma
+        ? 'arastirma'
+        : state.listeningMode.planlama
+          ? 'planlama'
+          : null
+    : null;
+
+  const listening = useListening({
+    active: listeningSource !== null,
+    engine: state?.aiEngine ?? 'local',
+    onNotes: (notes) => addListeningNotes(notes, listeningSource ?? 'jarvis'),
+    onTrigger: (message) => void onSendMessage(message),
+  });
 
   if (!state) return null;
 
@@ -151,6 +170,24 @@ export default function App() {
 
   const onSelectPhase = (id: string) => update({ selectedPhaseId: id });
 
+  const addListeningNotes = (texts: string[], source: ListeningNote['source']) =>
+    setState((s) =>
+      s
+        ? {
+            ...s,
+            listeningNotes: [
+              ...s.listeningNotes,
+              ...texts.map((text) => ({
+                id: newId(),
+                text,
+                source,
+                createdAt: new Date().toISOString(),
+              })),
+            ],
+          }
+        : s,
+    );
+
   const onTogglePossibility = (phaseId: string, possibilityId: string) =>
     update({
       planPhases: state.planPhases.map((p) =>
@@ -222,6 +259,7 @@ export default function App() {
             notes={state.listeningNotes.filter((n) => n.source === 'jarvis')}
             memory={state.memory}
             listening={state.listeningMode.jarvis}
+            listeningStatus={listening}
             pending={pending}
             pendingAction={pendingAction}
             onToggleListening={() => onToggleListening('jarvis')}
@@ -234,6 +272,7 @@ export default function App() {
         {tab === 'arastirma' && (
           <ArastirmaScreen
             listening={state.listeningMode.arastirma}
+            listeningStatus={listening}
             phases={state.planPhases}
             selectedPhaseId={state.selectedPhaseId}
             savedResearch={state.savedResearch}
@@ -247,6 +286,7 @@ export default function App() {
             selectedPhaseId={state.selectedPhaseId}
             savedResearch={state.savedResearch}
             listening={state.listeningMode.planlama}
+            listeningStatus={listening}
             onToggleListening={() => onToggleListening('planlama')}
             onSelectPhase={onSelectPhase}
             onTogglePossibility={onTogglePossibility}

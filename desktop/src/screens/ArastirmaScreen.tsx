@@ -1,9 +1,11 @@
+import type React from 'react';
 import { useState } from 'react';
 import { ListeningModeBar } from '../components/ListeningModeBar';
 import type { PlanPhase, ResearchResult, SavedResearchItem } from '../../shared/types';
 
 interface ArastirmaScreenProps {
   listening: boolean;
+  listeningStatus?: React.ComponentProps<typeof ListeningModeBar>['status'];
   phases: PlanPhase[];
   selectedPhaseId: string | null;
   savedResearch: SavedResearchItem[];
@@ -20,6 +22,7 @@ const cardBase = {
 
 export function ArastirmaScreen({
   listening,
+  listeningStatus,
   phases,
   selectedPhaseId,
   savedResearch,
@@ -137,6 +140,7 @@ export function ArastirmaScreen({
 
       <ListeningModeBar
         active={listening}
+        status={listeningStatus}
         onToggle={onToggleListening}
         label={listening ? 'Dinleme Modu açık — "bunu kaydet" komutu dinleniyor' : 'Dinleme Modu kapalı'}
       />

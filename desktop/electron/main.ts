@@ -2,7 +2,8 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'node:path';
 import { loadState, saveState } from './store';
 import { getPublicSettings, updateSettings } from './settings';
-import { handleChat, handleGenerateCards } from './ai';
+import { handleChat, handleExtractNotes, handleGenerateCards } from './ai';
+import { transcribe } from './stt';
 import { openExternal, saveResult, search } from './research';
 import { handleMediaProtocol, registerMediaScheme } from './mediaProtocol';
 import { executeApprovedAction } from './pc';
@@ -10,10 +11,12 @@ import {
   AI_CHANNELS,
   PC_CHANNELS,
   RESEARCH_CHANNELS,
+  STT_CHANNELS,
   SETTINGS_CHANNELS,
   STORE_CHANNELS,
   type AppState,
   type ChatRequest,
+  type ExtractNotesRequest,
   type GenerateCardsRequest,
   type PendingPcAction,
   type ResearchResult,
@@ -71,6 +74,14 @@ ipcMain.handle(AI_CHANNELS.chat, async (_event, request: ChatRequest) => {
 
 ipcMain.handle(AI_CHANNELS.generateCards, async (_event, request: GenerateCardsRequest) => {
   return handleGenerateCards(request);
+});
+
+ipcMain.handle(AI_CHANNELS.extractNotes, async (_event, request: ExtractNotesRequest) => {
+  return handleExtractNotes(request);
+});
+
+ipcMain.handle(STT_CHANNELS.transcribe, async (_event, wav: Uint8Array) => {
+  return transcribe(wav);
 });
 
 ipcMain.handle(PC_CHANNELS.execute, async (_event, action: PendingPcAction) => {

@@ -36,6 +36,8 @@ export function SettingsModal({ settings, onSave, onClose }: SettingsModalProps)
   const [ollamaModel, setOllamaModel] = useState('');
   const [saveFolder, setSaveFolder] = useState('');
   const [pcControlEnabled, setPcControlEnabled] = useState(false);
+  const [whisperPath, setWhisperPath] = useState('');
+  const [whisperModelPath, setWhisperModelPath] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -45,11 +47,21 @@ export function SettingsModal({ settings, onSave, onClose }: SettingsModalProps)
     setOllamaModel(settings.ollamaModel);
     setSaveFolder(settings.saveFolder);
     setPcControlEnabled(settings.pcControlEnabled);
+    setWhisperPath(settings.whisperPath);
+    setWhisperModelPath(settings.whisperModelPath);
   }, [settings]);
 
   const save = async () => {
     setSaving(true);
-    const patch: SettingsPatch = { geminiModel, ollamaBaseUrl, ollamaModel, saveFolder, pcControlEnabled };
+    const patch: SettingsPatch = {
+      geminiModel,
+      ollamaBaseUrl,
+      ollamaModel,
+      saveFolder,
+      pcControlEnabled,
+      whisperPath,
+      whisperModelPath,
+    };
     if (geminiKey.trim()) patch.geminiApiKey = geminiKey.trim();
     if (youtubeKey.trim()) patch.youtubeApiKey = youtubeKey.trim();
     await onSave(patch);
@@ -155,6 +167,29 @@ export function SettingsModal({ settings, onSave, onClose }: SettingsModalProps)
             placeholder="Boş bırakırsan uygulama klasöründeki 'kayitlar' kullanılır"
             style={inputStyle}
           />
+        </div>
+
+        <div style={{ marginBottom: 18 }}>
+          <span style={labelStyle}>Dinleme Modu — whisper.cpp çalıştırılabiliri</span>
+          <input
+            value={whisperPath}
+            onChange={(e) => setWhisperPath(e.target.value)}
+            placeholder="örn. C:\\whisper\\whisper-cli.exe"
+            style={inputStyle}
+          />
+        </div>
+
+        <div style={{ marginBottom: 24 }}>
+          <span style={labelStyle}>Dinleme Modu — model dosyası</span>
+          <input
+            value={whisperModelPath}
+            onChange={(e) => setWhisperModelPath(e.target.value)}
+            placeholder="örn. C:\\whisper\\models\\ggml-medium.bin"
+            style={inputStyle}
+          />
+          <div style={{ fontSize: 10.5, color: 'var(--text-dim)', marginTop: 6 }}>
+            Ses bilgisayardan çıkmaz; yazıya çevirme tamamen yerelde yapılır.
+          </div>
         </div>
 
         <div

@@ -3,6 +3,7 @@ import {
   AI_CHANNELS,
   PC_CHANNELS,
   RESEARCH_CHANNELS,
+  STT_CHANNELS,
   SETTINGS_CHANNELS,
   STORE_CHANNELS,
   type AppState,
@@ -10,7 +11,10 @@ import {
   type ChatResponse,
   type GenerateCardsRequest,
   type GenerateCardsResponse,
+  type ExtractNotesRequest,
+  type ExtractNotesResponse,
   type PcExecuteResponse,
+  type TranscribeResponse,
   type PendingPcAction,
   type PublicSettings,
   type ResearchResult,
@@ -27,6 +31,10 @@ contextBridge.exposeInMainWorld('jarvisDesktop', {
   sendChat: (request: ChatRequest): Promise<ChatResponse> => ipcRenderer.invoke(AI_CHANNELS.chat, request),
   generateCards: (request: GenerateCardsRequest): Promise<GenerateCardsResponse> =>
     ipcRenderer.invoke(AI_CHANNELS.generateCards, request),
+  transcribe: (wav: Uint8Array): Promise<TranscribeResponse> =>
+    ipcRenderer.invoke(STT_CHANNELS.transcribe, wav),
+  extractNotes: (request: ExtractNotesRequest): Promise<ExtractNotesResponse> =>
+    ipcRenderer.invoke(AI_CHANNELS.extractNotes, request),
   executeAction: (action: PendingPcAction): Promise<PcExecuteResponse> =>
     ipcRenderer.invoke(PC_CHANNELS.execute, action),
   searchResearch: (query: string): Promise<SearchResponse> => ipcRenderer.invoke(RESEARCH_CHANNELS.search, query),

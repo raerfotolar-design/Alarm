@@ -4,7 +4,10 @@ import type {
   ChatResponse,
   GenerateCardsRequest,
   GenerateCardsResponse,
+  ExtractNotesRequest,
+  ExtractNotesResponse,
   PcExecuteResponse,
+  TranscribeResponse,
   PendingPcAction,
   PublicSettings,
   ResearchResult,
@@ -22,6 +25,8 @@ declare global {
       updateSettings: (patch: SettingsPatch) => Promise<PublicSettings>;
       sendChat: (request: ChatRequest) => Promise<ChatResponse>;
       generateCards: (request: GenerateCardsRequest) => Promise<GenerateCardsResponse>;
+      transcribe: (wav: Uint8Array) => Promise<TranscribeResponse>;
+      extractNotes: (request: ExtractNotesRequest) => Promise<ExtractNotesResponse>;
       executeAction: (action: PendingPcAction) => Promise<PcExecuteResponse>;
       searchResearch: (query: string) => Promise<SearchResponse>;
       saveResearch: (result: ResearchResult, phaseId: string | null) => Promise<SaveResponse>;

@@ -23,12 +23,15 @@ Design reference: https://claude.ai/code/artifact/0592fc1f-ea80-473d-a4be-354d5d
   - *Needs your approval every time:* `write_file`, `delete_path` (goes to the OS trash), `move_path`, `run_command` — the chat shows an approval card with the exact path or command, and nothing runs until you press İzin ver.
   - Neither engine's native function-calling is used, so it works identically on Gemini and any Ollama model: the model answers with a `{"action": ...}` block, which `electron/pc/protocol.ts` parses out and never shows to the user.
   - The main process re-checks the switch and the tool name on every execution, so an approval-shaped message cannot run anything on its own.
+- **Dinleme Modu**: real passive listening. The microphone is captured in the renderer and encoded to 16 kHz mono WAV in-process (`src/audio/recorder.ts`) — no ffmpeg needed — in 12-second segments, and silent segments are dropped before they cost anything. Each segment is transcribed by a **local whisper.cpp** build (paths set in Settings), so audio never leaves the machine. The transcript is distilled into at most three notes, and saying **"Jarvis konuş"** ends the silence: whatever follows the phrase is sent to Jarvis as a message. Without a configured whisper binary the bar says so instead of failing quietly.
 - **Settings** (sidebar gear): Gemini and YouTube API keys, model names, Ollama URL, save folder, PC-control switch. Keys are encrypted with Electron's `safeStorage` and never sent back to the renderer.
 - **Planlama**: real Plan Ağacı data model — phases, progress, possibilities (toggleable), per-phase notes, add-phase FAB. Persisted locally.
 - **Araştırma**: real search across Openverse + Wikimedia Commons (no key needed) and YouTube (needs the user's own free API key). Saving downloads the file into the save folder — videos keep their thumbnail plus the link — and attaches it to the chosen Plan Ağacı phase, where it shows up under that phase's Araştırmalar/Medya tabs.
 - **Öğrenme**: real spaced repetition (SM-2 in `shared/sm2.ts`). Decks per topic (dil / programlama), Zor/Orta/Kolay grading that moves each card's interval and ease factor, a due queue that refills by date, and streak / mastery / 5-week heatmap computed from the actual review log. "Kart üret" asks the selected engine for cards on a topic and adds them to the deck.
 
-Not yet built: local Whisper listening, Supabase/Firebase shared backend, global wake-word.
+Not yet built: Supabase/Firebase shared backend, global wake-word.
+
+Listening mode needs whisper.cpp installed separately (build it, download a `ggml-*.bin` model, then point Settings at both). The microphone path itself could not be exercised in the development container — the transcription, note-extraction, trigger-detection and WAV-encoding paths are covered by tests, but recording from a real device is unverified until you run it.
 
 ## Architecture notes
 

@@ -1,3 +1,4 @@
+import type React from 'react';
 import { useState } from 'react';
 import { ListeningModeBar } from '../components/ListeningModeBar';
 import type { ChatMessage, JarvisMemory, ListeningNote, PendingPcAction } from '../../shared/types';
@@ -7,6 +8,7 @@ interface JarvisScreenProps {
   notes: ListeningNote[];
   memory: JarvisMemory;
   listening: boolean;
+  listeningStatus?: React.ComponentProps<typeof ListeningModeBar>['status'];
   pending: boolean;
   pendingAction: PendingPcAction | null;
   onToggleListening: () => void;
@@ -21,6 +23,7 @@ export function JarvisScreen({
   notes,
   memory,
   listening,
+  listeningStatus,
   pending,
   pendingAction,
   onToggleListening,
@@ -51,6 +54,7 @@ export function JarvisScreen({
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, padding: '20px 24px' }}>
         <ListeningModeBar
           active={listening}
+          status={listeningStatus}
           onToggle={onToggleListening}
           label={
             listening
