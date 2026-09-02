@@ -8,6 +8,8 @@ const TARGET_SAMPLE_RATE = 16_000;
 const SEGMENT_SECONDS = 12;
 /** Below this the segment is silence or room noise and is not worth transcribing. */
 const SILENCE_RMS = 0.006;
+/** How long to wait for the microphone before giving up and reporting it. */
+const MIC_TIMEOUT_MS = 10_000;
 
 export interface RecorderHandle {
   stop: () => void;
@@ -59,9 +61,16 @@ export function isSilent(samples: Float32Array): boolean {
  * microphone is live, or rejects when permission is refused or no device exists.
  */
 export async function startRecording(onSegment: (wav: Uint8Array) => void): Promise<RecorderHandle> {
-  const stream = await navigator.mediaDevices.getUserMedia({
-    audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true },
-  });
+  // On a machine with no working input device the permission request can hang instead
+  // of rejecting, which would leave the bar saying "starting" forever.
+  const stream = await Promise.race([
+    navigator.mediaDevices.getUserMedia({
+      audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true },
+    }),
+    new Promise<MediaStream>((_, reject) =>
+      setTimeout(() => reject(new Error('mikrofon yanıt vermedi')), MIC_TIMEOUT_MS),
+    ),
+  ]);
 
   const context = new AudioContext({ sampleRate: TARGET_SAMPLE_RATE });
   const source = context.createMediaStreamSource(stream);

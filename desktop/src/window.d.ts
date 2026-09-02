@@ -25,6 +25,7 @@ declare global {
       updateSettings: (patch: SettingsPatch) => Promise<PublicSettings>;
       sendChat: (request: ChatRequest) => Promise<ChatResponse>;
       generateCards: (request: GenerateCardsRequest) => Promise<GenerateCardsResponse>;
+      onSummon: (callback: () => void) => () => void;
       transcribe: (wav: Uint8Array) => Promise<TranscribeResponse>;
       extractNotes: (request: ExtractNotesRequest) => Promise<ExtractNotesResponse>;
       executeAction: (action: PendingPcAction) => Promise<PcExecuteResponse>;

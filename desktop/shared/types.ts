@@ -168,6 +168,9 @@ export interface PublicSettings {
   pcControlEnabled: boolean;
   whisperPath: string;
   whisperModelPath: string;
+  hotkey: string;
+  /** False when another program already owns the accelerator. */
+  hotkeyRegistered: boolean;
 }
 
 export interface SettingsPatch {
@@ -181,6 +184,7 @@ export interface SettingsPatch {
   pcControlEnabled?: boolean;
   whisperPath?: string;
   whisperModelPath?: string;
+  hotkey?: string;
 }
 
 export interface ChatRequest {
@@ -218,6 +222,11 @@ export const SETTINGS_CHANNELS = {
 
 export const PC_CHANNELS = {
   execute: 'pc:execute',
+} as const;
+
+export const APP_EVENTS = {
+  /** Main → renderer: the global hotkey was pressed. */
+  summon: 'app:summon',
 } as const;
 
 export const STT_CHANNELS = {

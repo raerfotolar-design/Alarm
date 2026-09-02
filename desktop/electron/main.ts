@@ -1,7 +1,8 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, session } from 'electron';
 import path from 'node:path';
 import { loadState, saveState } from './store';
-import { getPublicSettings, updateSettings } from './settings';
+import { getHotkey, getPublicSettings, setHotkeyRegistered, updateSettings } from './settings';
+import { DEFAULT_HOTKEY, registerHotkey, unregisterHotkey } from './hotkey';
 import { handleChat, handleExtractNotes, handleGenerateCards } from './ai';
 import { transcribe } from './stt';
 import { openExternal, saveResult, search } from './research';
@@ -27,6 +28,8 @@ const isDev = process.env.NODE_ENV === 'development';
 
 registerMediaScheme();
 
+let mainWindow: BrowserWindow | null = null;
+
 function createWindow(): void {
   const win = new BrowserWindow({
     width: 1440,
@@ -41,6 +44,11 @@ function createWindow(): void {
       nodeIntegration: false,
       sandbox: false,
     },
+  });
+
+  mainWindow = win;
+  win.on('closed', () => {
+    if (mainWindow === win) mainWindow = null;
   });
 
   if (isDev) {
@@ -65,7 +73,12 @@ ipcMain.handle(SETTINGS_CHANNELS.get, async () => {
 });
 
 ipcMain.handle(SETTINGS_CHANNELS.set, async (_event, patch: SettingsPatch) => {
-  return updateSettings(patch);
+  const updated = await updateSettings(patch);
+  if (patch.hotkey !== undefined) {
+    setHotkeyRegistered(registerHotkey(patch.hotkey || DEFAULT_HOTKEY, () => mainWindow));
+    return getPublicSettings();
+  }
+  return updated;
 });
 
 ipcMain.handle(AI_CHANNELS.chat, async (_event, request: ChatRequest) => {
@@ -100,13 +113,23 @@ ipcMain.handle(RESEARCH_CHANNELS.openExternal, async (_event, url: string) => {
   return openExternal(url);
 });
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  // Listening mode needs the microphone; nothing else is granted.
+  session.defaultSession.setPermissionRequestHandler((_contents, permission, callback) => {
+    callback(permission === 'media');
+  });
+
   handleMediaProtocol();
   createWindow();
+  setHotkeyRegistered(registerHotkey(await getHotkey(), () => mainWindow));
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
+});
+
+app.on('will-quit', () => {
+  unregisterHotkey();
 });
 
 app.on('window-all-closed', () => {

@@ -38,6 +38,7 @@ export function SettingsModal({ settings, onSave, onClose }: SettingsModalProps)
   const [pcControlEnabled, setPcControlEnabled] = useState(false);
   const [whisperPath, setWhisperPath] = useState('');
   const [whisperModelPath, setWhisperModelPath] = useState('');
+  const [hotkey, setHotkey] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -49,6 +50,7 @@ export function SettingsModal({ settings, onSave, onClose }: SettingsModalProps)
     setPcControlEnabled(settings.pcControlEnabled);
     setWhisperPath(settings.whisperPath);
     setWhisperModelPath(settings.whisperModelPath);
+    setHotkey(settings.hotkey);
   }, [settings]);
 
   const save = async () => {
@@ -61,6 +63,7 @@ export function SettingsModal({ settings, onSave, onClose }: SettingsModalProps)
       pcControlEnabled,
       whisperPath,
       whisperModelPath,
+      hotkey,
     };
     if (geminiKey.trim()) patch.geminiApiKey = geminiKey.trim();
     if (youtubeKey.trim()) patch.youtubeApiKey = youtubeKey.trim();
@@ -167,6 +170,27 @@ export function SettingsModal({ settings, onSave, onClose }: SettingsModalProps)
             placeholder="Boş bırakırsan uygulama klasöründeki 'kayitlar' kullanılır"
             style={inputStyle}
           />
+        </div>
+
+        <div style={{ marginBottom: 18 }}>
+          <span style={labelStyle}>Her yerden çağırma kısayolu</span>
+          <input
+            value={hotkey}
+            onChange={(e) => setHotkey(e.target.value)}
+            placeholder="CommandOrControl+Shift+J"
+            style={inputStyle}
+          />
+          <div
+            style={{
+              fontSize: 10.5,
+              marginTop: 6,
+              color: settings && !settings.hotkeyRegistered ? '#F87171' : 'var(--text-dim)',
+            }}
+          >
+            {settings && !settings.hotkeyRegistered
+              ? 'Bu kısayol başka bir program tarafından kullanılıyor — başka bir kombinasyon dene.'
+              : 'Hangi uygulamada olursan ol bu tuşlarla Jarvis açılır ve dinlemeye başlar.'}
+          </div>
         </div>
 
         <div style={{ marginBottom: 18 }}>

@@ -66,6 +66,15 @@ export default function App() {
     })();
   }, []);
 
+  // The global hotkey opens Jarvis and starts listening, from any tab or any app.
+  useEffect(() => {
+    if (!hasBridge()) return;
+    return window.jarvisDesktop.onSummon(() => {
+      setTab('jarvis');
+      setState((s) => (s ? { ...s, listeningMode: { ...s.listeningMode, jarvis: true } } : s));
+    });
+  }, []);
+
   useEffect(() => {
     if (!state || !hasBridge()) return;
     if (saveTimer.current) clearTimeout(saveTimer.current);

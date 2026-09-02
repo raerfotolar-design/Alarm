@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import {
   AI_CHANNELS,
+  APP_EVENTS,
   PC_CHANNELS,
   RESEARCH_CHANNELS,
   STT_CHANNELS,
@@ -31,6 +32,11 @@ contextBridge.exposeInMainWorld('jarvisDesktop', {
   sendChat: (request: ChatRequest): Promise<ChatResponse> => ipcRenderer.invoke(AI_CHANNELS.chat, request),
   generateCards: (request: GenerateCardsRequest): Promise<GenerateCardsResponse> =>
     ipcRenderer.invoke(AI_CHANNELS.generateCards, request),
+  onSummon: (callback: () => void): (() => void) => {
+    const listener = () => callback();
+    ipcRenderer.on(APP_EVENTS.summon, listener);
+    return () => ipcRenderer.removeListener(APP_EVENTS.summon, listener);
+  },
   transcribe: (wav: Uint8Array): Promise<TranscribeResponse> =>
     ipcRenderer.invoke(STT_CHANNELS.transcribe, wav),
   extractNotes: (request: ExtractNotesRequest): Promise<ExtractNotesResponse> =>
