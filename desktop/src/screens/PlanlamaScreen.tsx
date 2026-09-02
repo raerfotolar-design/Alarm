@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { ListeningModeBar } from '../components/ListeningModeBar';
 import { PlusIcon } from '../icons';
-import type { PlanPhase } from '../../shared/types';
+import { mediaUrl } from '../media';
+import type { PlanPhase, SavedResearchItem } from '../../shared/types';
 
 interface PlanlamaScreenProps {
   phases: PlanPhase[];
   selectedPhaseId: string | null;
+  savedResearch: SavedResearchItem[];
   listening: boolean;
   onToggleListening: () => void;
   onSelectPhase: (id: string) => void;
@@ -19,6 +21,7 @@ type DetailTab = 'notlar' | 'arastirmalar' | 'medya';
 export function PlanlamaScreen({
   phases,
   selectedPhaseId,
+  savedResearch,
   listening,
   onToggleListening,
   onSelectPhase,
@@ -30,6 +33,8 @@ export function PlanlamaScreen({
   const [noteDraft, setNoteDraft] = useState('');
   const sorted = [...phases].sort((a, b) => a.order - b.order);
   const selected = sorted.find((p) => p.id === selectedPhaseId) ?? sorted[0];
+  const linkedResearch = savedResearch.filter((r) => r.phaseId === selected?.id);
+  const linkedImages = linkedResearch.filter((r) => r.kind === 'image');
 
   const submitNote = () => {
     const text = noteDraft.trim();
@@ -153,7 +158,7 @@ export function PlanlamaScreen({
                 Faz {selected.order} — {selected.title}
               </div>
               <div style={{ fontSize: 11.5, color: 'var(--text-dim)', marginBottom: 16 }}>
-                {selected.notes.length} not · {selected.researchIds.length} araştırma
+                {selected.notes.length} not · {linkedResearch.length} araştırma · {linkedImages.length} medya
               </div>
               <div style={{ display: 'flex', gap: 4, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: 3, marginBottom: 16 }}>
                 {(['notlar', 'arastirmalar', 'medya'] as DetailTab[]).map((t) => (
@@ -189,12 +194,58 @@ export function PlanlamaScreen({
                     </div>
                   ))
                 ))}
-              {detailTab === 'arastirmalar' && (
-                <div style={{ color: 'var(--text-dim)', fontSize: 12 }}>Araştırma sekmesinden bu faza bağlanan öğeler burada listelenecek.</div>
-              )}
-              {detailTab === 'medya' && (
-                <div style={{ color: 'var(--text-dim)', fontSize: 12 }}>Bu faza kaydedilen görsel/videolar burada listelenecek.</div>
-              )}
+              {detailTab === 'arastirmalar' &&
+                (linkedResearch.length === 0 ? (
+                  <div style={{ color: 'var(--text-dim)', fontSize: 12 }}>
+                    Araştırma sekmesinde bir sonucu bu faza bağlayarak kaydet, burada görünsün.
+                  </div>
+                ) : (
+                  linkedResearch
+                    .slice()
+                    .reverse()
+                    .map((r) => (
+                      <button
+                        key={r.id}
+                        onClick={() => window.jarvisDesktop?.openExternal(r.sourceUrl)}
+                        style={{
+                          textAlign: 'left',
+                          background: 'var(--surface-alt)',
+                          border: '1px solid var(--border)',
+                          borderRadius: 12,
+                          padding: 12,
+                        }}
+                      >
+                        <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4, color: 'var(--text)' }}>{r.title}</div>
+                        <div style={{ fontSize: 10.5, color: 'var(--text-dim)' }}>
+                          {r.provider} · {r.kind === 'video' ? 'video' : 'görsel'}
+                        </div>
+                      </button>
+                    ))
+                ))}
+              {detailTab === 'medya' &&
+                (linkedImages.length === 0 ? (
+                  <div style={{ color: 'var(--text-dim)', fontSize: 12 }}>Bu faza kaydedilmiş bir dosya yok.</div>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    {linkedImages
+                      .slice()
+                      .reverse()
+                      .map((r) => (
+                        <div
+                          key={r.id}
+                          title={r.filePath || r.title}
+                          style={{
+                            aspectRatio: '1',
+                            borderRadius: 10,
+                            border: '1px solid var(--border)',
+                            background: r.filePath
+                              ? `#0D1220 center/cover no-repeat url("${mediaUrl(r.filePath)}")`
+                              : '#0D1220',
+                          }}
+                        />
+                      ))}
+                  </div>
+                ))}
             </div>
             {detailTab === 'notlar' && (
               <div style={{ padding: 16, display: 'flex', gap: 6, borderTop: '1px solid var(--border)' }}>

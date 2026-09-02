@@ -64,6 +64,7 @@ function defaultState(): AppState {
     ],
     selectedPhaseId: 'faz-2',
     memory: emptyMemory(),
+    savedResearch: [],
   };
 }
 

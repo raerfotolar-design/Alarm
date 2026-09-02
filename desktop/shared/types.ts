@@ -31,6 +31,33 @@ export interface PlanPhase {
   researchIds: string[];
 }
 
+export type ResearchKind = 'image' | 'video';
+
+export interface ResearchResult {
+  id: string;
+  kind: ResearchKind;
+  title: string;
+  /** Preview image. For videos this is the video thumbnail. */
+  thumbnailUrl: string;
+  /** Page to open in a browser. */
+  sourceUrl: string;
+  /** Direct media URL, or '' when the provider offers no downloadable file. */
+  downloadUrl: string;
+  provider: string;
+}
+
+export interface SavedResearchItem {
+  id: string;
+  title: string;
+  kind: ResearchKind;
+  provider: string;
+  sourceUrl: string;
+  /** Where the file landed on disk, or '' when only the link was kept. */
+  filePath: string;
+  phaseId: string | null;
+  createdAt: string;
+}
+
 export interface MemoryFact {
   id: string;
   text: string;
@@ -60,22 +87,27 @@ export interface AppState {
   planPhases: PlanPhase[];
   selectedPhaseId: string | null;
   memory: JarvisMemory;
+  savedResearch: SavedResearchItem[];
 }
 
-/** Settings as the renderer sees them — the Gemini key itself never leaves the main process. */
+/** Settings as the renderer sees them — API keys themselves never leave the main process. */
 export interface PublicSettings {
   hasGeminiKey: boolean;
+  hasYoutubeKey: boolean;
   geminiModel: string;
   ollamaBaseUrl: string;
   ollamaModel: string;
+  saveFolder: string;
 }
 
 export interface SettingsPatch {
   /** A new key, or null to clear the stored one. Omit to leave it untouched. */
   geminiApiKey?: string | null;
+  youtubeApiKey?: string | null;
   geminiModel?: string;
   ollamaBaseUrl?: string;
   ollamaModel?: string;
+  saveFolder?: string;
 }
 
 export interface ChatRequest {
@@ -104,3 +136,13 @@ export const SETTINGS_CHANNELS = {
   get: 'settings:get',
   set: 'settings:set',
 } as const;
+
+export const RESEARCH_CHANNELS = {
+  search: 'research:search',
+  save: 'research:save',
+  openExternal: 'research:openExternal',
+} as const;
+
+export type SearchResponse = { ok: true; results: ResearchResult[]; notes: string[] } | { ok: false; error: string };
+
+export type SaveResponse = { ok: true; item: SavedResearchItem } | { ok: false; error: string };

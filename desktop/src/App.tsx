@@ -17,6 +17,7 @@ const FALLBACK_STATE: AppState = {
   planPhases: [],
   selectedPhaseId: null,
   memory: { summary: '', facts: [], summarizedThroughId: null },
+  savedResearch: [],
 };
 
 function hasBridge(): boolean {
@@ -156,12 +157,20 @@ export default function App() {
           />
         )}
         {tab === 'arastirma' && (
-          <ArastirmaScreen listening={state.listeningMode.arastirma} onToggleListening={() => onToggleListening('arastirma')} />
+          <ArastirmaScreen
+            listening={state.listeningMode.arastirma}
+            phases={state.planPhases}
+            selectedPhaseId={state.selectedPhaseId}
+            savedResearch={state.savedResearch}
+            onToggleListening={() => onToggleListening('arastirma')}
+            onSaved={(item) => setState((s) => (s ? { ...s, savedResearch: [...s.savedResearch, item] } : s))}
+          />
         )}
         {tab === 'planlama' && (
           <PlanlamaScreen
             phases={state.planPhases}
             selectedPhaseId={state.selectedPhaseId}
+            savedResearch={state.savedResearch}
             listening={state.listeningMode.planlama}
             onToggleListening={() => onToggleListening('planlama')}
             onSelectPhase={onSelectPhase}

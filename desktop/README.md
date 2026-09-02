@@ -20,13 +20,15 @@ Design reference: https://claude.ai/code/artifact/0592fc1f-ea80-473d-a4be-354d5d
   - Both are visible in the Jarvis notes panel under "Jarvis'in Hafızası".
 - **Settings** (sidebar gear): Gemini API key + model, Ollama URL + model. The key is encrypted with Electron's `safeStorage` and is never sent back to the renderer.
 - **Planlama**: real Plan Ağacı data model — phases, progress, possibilities (toggleable), per-phase notes, add-phase FAB. Persisted locally.
-- **Araştırma** / **Öğrenme**: UI shells with mock data, not yet wired to real search/spaced-repetition logic.
+- **Araştırma**: real search across Openverse + Wikimedia Commons (no key needed) and YouTube (needs the user's own free API key). Saving downloads the file into the save folder — videos keep their thumbnail plus the link — and attaches it to the chosen Plan Ağacı phase, where it shows up under that phase's Araştırmalar/Medya tabs.
+- **Öğrenme**: UI shell with mock data, not yet wired to real spaced-repetition logic.
 
 Not yet built: local Whisper listening, "100% PC control", web research + save-to-disk, Supabase/Firebase shared backend, spaced-repetition engine, wake-word.
 
 ## Architecture notes
 
-- All AI calls and secrets live in the **main process** (`electron/ai/`, `electron/settings.ts`); the renderer only talks over IPC (`shared/types.ts` defines the channels). No API key ever reaches the renderer.
+- All AI calls, network calls and secrets live in the **main process** (`electron/ai/`, `electron/research/`, `electron/settings.ts`); the renderer only talks over IPC (`shared/types.ts` defines the channels). No API key ever reaches the renderer.
+- Saved files are served to the page through the app's own `jarvis-media://` scheme (`electron/mediaProtocol.ts`), which only serves paths inside the save folder — `file://` stays blocked by the page CSP.
 - The preload runs with `sandbox: false` so it can `require` the shared types module; `contextIsolation` stays on and `nodeIntegration` off.
 - Fonts load from Google Fonts, so on a machine with no internet the UI falls back to system sans — worth bundling locally later.
 

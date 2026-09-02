@@ -3,16 +3,22 @@ import path from 'node:path';
 import { loadState, saveState } from './store';
 import { getPublicSettings, updateSettings } from './settings';
 import { handleChat } from './ai';
+import { openExternal, saveResult, search } from './research';
+import { handleMediaProtocol, registerMediaScheme } from './mediaProtocol';
 import {
   AI_CHANNELS,
+  RESEARCH_CHANNELS,
   SETTINGS_CHANNELS,
   STORE_CHANNELS,
   type AppState,
   type ChatRequest,
+  type ResearchResult,
   type SettingsPatch,
 } from '../shared/types';
 
 const isDev = process.env.NODE_ENV === 'development';
+
+registerMediaScheme();
 
 function createWindow(): void {
   const win = new BrowserWindow({
@@ -59,7 +65,20 @@ ipcMain.handle(AI_CHANNELS.chat, async (_event, request: ChatRequest) => {
   return handleChat(request);
 });
 
+ipcMain.handle(RESEARCH_CHANNELS.search, async (_event, query: string) => {
+  return search(query);
+});
+
+ipcMain.handle(RESEARCH_CHANNELS.save, async (_event, result: ResearchResult, phaseId: string | null) => {
+  return saveResult(result, phaseId);
+});
+
+ipcMain.handle(RESEARCH_CHANNELS.openExternal, async (_event, url: string) => {
+  return openExternal(url);
+});
+
 app.whenReady().then(() => {
+  handleMediaProtocol();
   createWindow();
 
   app.on('activate', () => {

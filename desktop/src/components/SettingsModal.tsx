@@ -30,9 +30,11 @@ const labelStyle = {
 
 export function SettingsModal({ settings, onSave, onClose }: SettingsModalProps) {
   const [geminiKey, setGeminiKey] = useState('');
+  const [youtubeKey, setYoutubeKey] = useState('');
   const [geminiModel, setGeminiModel] = useState('');
   const [ollamaBaseUrl, setOllamaBaseUrl] = useState('');
   const [ollamaModel, setOllamaModel] = useState('');
+  const [saveFolder, setSaveFolder] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -40,15 +42,18 @@ export function SettingsModal({ settings, onSave, onClose }: SettingsModalProps)
     setGeminiModel(settings.geminiModel);
     setOllamaBaseUrl(settings.ollamaBaseUrl);
     setOllamaModel(settings.ollamaModel);
+    setSaveFolder(settings.saveFolder);
   }, [settings]);
 
   const save = async () => {
     setSaving(true);
-    const patch: SettingsPatch = { geminiModel, ollamaBaseUrl, ollamaModel };
+    const patch: SettingsPatch = { geminiModel, ollamaBaseUrl, ollamaModel, saveFolder };
     if (geminiKey.trim()) patch.geminiApiKey = geminiKey.trim();
+    if (youtubeKey.trim()) patch.youtubeApiKey = youtubeKey.trim();
     await onSave(patch);
     setSaving(false);
     setGeminiKey('');
+    setYoutubeKey('');
     onClose();
   };
 
@@ -121,12 +126,33 @@ export function SettingsModal({ settings, onSave, onClose }: SettingsModalProps)
           <input value={ollamaBaseUrl} onChange={(e) => setOllamaBaseUrl(e.target.value)} style={inputStyle} />
         </div>
 
-        <div style={{ marginBottom: 24 }}>
+        <div style={{ marginBottom: 18 }}>
           <span style={labelStyle}>Yerel AI — model</span>
           <input value={ollamaModel} onChange={(e) => setOllamaModel(e.target.value)} style={inputStyle} />
           <div style={{ fontSize: 10.5, color: 'var(--text-dim)', marginTop: 6 }}>
             RTX 5060 8GB için 7B–14B modeller uygun (örn. llama3.1:8b, qwen2.5:14b).
           </div>
+        </div>
+
+        <div style={{ marginBottom: 18 }}>
+          <span style={labelStyle}>Araştırma — YouTube API anahtarı (video araması için)</span>
+          <input
+            type="password"
+            value={youtubeKey}
+            onChange={(e) => setYoutubeKey(e.target.value)}
+            placeholder={settings?.hasYoutubeKey ? '•••••••• (kayıtlı)' : 'İsteğe bağlı — görsel araması anahtarsız çalışır'}
+            style={inputStyle}
+          />
+        </div>
+
+        <div style={{ marginBottom: 24 }}>
+          <span style={labelStyle}>Araştırma — kayıt klasörü</span>
+          <input
+            value={saveFolder}
+            onChange={(e) => setSaveFolder(e.target.value)}
+            placeholder="Boş bırakırsan uygulama klasöründeki 'kayitlar' kullanılır"
+            style={inputStyle}
+          />
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
