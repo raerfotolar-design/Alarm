@@ -21,7 +21,7 @@ Design reference: https://claude.ai/code/artifact/0592fc1f-ea80-473d-a4be-354d5d
 - **Settings** (sidebar gear): Gemini API key + model, Ollama URL + model. The key is encrypted with Electron's `safeStorage` and is never sent back to the renderer.
 - **Planlama**: real Plan Ağacı data model — phases, progress, possibilities (toggleable), per-phase notes, add-phase FAB. Persisted locally.
 - **Araştırma**: real search across Openverse + Wikimedia Commons (no key needed) and YouTube (needs the user's own free API key). Saving downloads the file into the save folder — videos keep their thumbnail plus the link — and attaches it to the chosen Plan Ağacı phase, where it shows up under that phase's Araştırmalar/Medya tabs.
-- **Öğrenme**: UI shell with mock data, not yet wired to real spaced-repetition logic.
+- **Öğrenme**: real spaced repetition (SM-2 in `shared/sm2.ts`). Decks per topic (dil / programlama), Zor/Orta/Kolay grading that moves each card's interval and ease factor, a due queue that refills by date, and streak / mastery / 5-week heatmap computed from the actual review log. "Kart üret" asks the selected engine for cards on a topic and adds them to the deck.
 
 Not yet built: local Whisper listening, "100% PC control", web research + save-to-disk, Supabase/Firebase shared backend, spaced-repetition engine, wake-word.
 

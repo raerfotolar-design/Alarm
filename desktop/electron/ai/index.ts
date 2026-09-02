@@ -1,4 +1,11 @@
-import type { ChatMessage, ChatRequest, ChatResponse, JarvisMemory } from '../../shared/types';
+import type {
+  ChatMessage,
+  ChatRequest,
+  ChatResponse,
+  GenerateCardsRequest,
+  GenerateCardsResponse,
+  JarvisMemory,
+} from '../../shared/types';
 import { getAiConfig } from '../settings';
 import { askGemini } from './gemini';
 import { askOllama } from './ollama';
@@ -12,6 +19,8 @@ import {
   parseSummaryReply,
   pendingForSummary,
 } from './memory';
+
+import { buildCardPrompt, parseCards } from './cards';
 
 type AiConfig = Awaited<ReturnType<typeof getAiConfig>>;
 
@@ -68,14 +77,37 @@ async function refreshMemory(
   return mergeMemory(memory, update, pending[pending.length - 1].id);
 }
 
+const NO_KEY_ERROR =
+  'Efendim, henüz bir Gemini API anahtarı girmemişsin. Sol alttaki ayarlar simgesinden ekleyebilirsin.';
+
+export async function handleGenerateCards(request: GenerateCardsRequest): Promise<GenerateCardsResponse> {
+  const config = await getAiConfig();
+  if (request.engine === 'cloud' && !config.geminiApiKey) return { ok: false, error: NO_KEY_ERROR };
+  if (!request.subject.trim()) return { ok: false, error: 'Önce hangi konuda kart istediğini yaz.' };
+
+  const count = Math.min(Math.max(request.count, 1), 20);
+
+  try {
+    const raw = await ask(
+      request.engine,
+      config,
+      'Sen bir öğrenme kartı üreticisisin. Sadece istenen JSON formatında cevap ver.',
+      [],
+      buildCardPrompt(request.topic, request.subject.trim(), count),
+    );
+    const cards = parseCards(raw, count);
+    if (cards.length === 0) return { ok: false, error: 'Model geçerli kart üretemedi, tekrar dene.' };
+    return { ok: true, cards };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Kartlar üretilemedi.' };
+  }
+}
+
 export async function handleChat(request: ChatRequest): Promise<ChatResponse> {
   const config = await getAiConfig();
 
   if (request.engine === 'cloud' && !config.geminiApiKey) {
-    return {
-      ok: false,
-      error: 'Efendim, henüz bir Gemini API anahtarı girmemişsin. Sol alttaki ayarlar simgesinden ekleyebilirsin.',
-    };
+    return { ok: false, error: NO_KEY_ERROR };
   }
 
   const systemPrompt = JARVIS_SYSTEM_PROMPT + buildMemoryBlock(request.memory, request.notes);

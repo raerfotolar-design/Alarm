@@ -65,6 +65,16 @@ function defaultState(): AppState {
     selectedPhaseId: 'faz-2',
     memory: emptyMemory(),
     savedResearch: [],
+    learning: {
+      decks: [
+        { id: 'deck-ingilizce', name: 'İngilizce', topic: 'dil' },
+        { id: 'deck-python', name: 'Python', topic: 'programlama' },
+      ],
+      cards: [],
+      reviewLog: {},
+      activeTopic: 'dil',
+      activeDeckId: 'deck-ingilizce',
+    },
   };
 }
 

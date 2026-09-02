@@ -7,7 +7,16 @@ import { ArastirmaScreen } from './screens/ArastirmaScreen';
 import { PlanlamaScreen } from './screens/PlanlamaScreen';
 import { OgrenmeScreen } from './screens/OgrenmeScreen';
 import type { TabId } from './tabs';
-import type { AiEngine, AppState, ChatMessage, PublicSettings, SettingsPatch } from '../shared/types';
+import { gradeCard, isoDate, newCard } from '../shared/sm2';
+import type {
+  AiEngine,
+  AppState,
+  ChatMessage,
+  LearningTopic,
+  PublicSettings,
+  ReviewGrade,
+  SettingsPatch,
+} from '../shared/types';
 
 const FALLBACK_STATE: AppState = {
   aiEngine: 'cloud',
@@ -18,6 +27,7 @@ const FALLBACK_STATE: AppState = {
   selectedPhaseId: null,
   memory: { summary: '', facts: [], summarizedThroughId: null },
   savedResearch: [],
+  learning: { decks: [], cards: [], reviewLog: {}, activeTopic: 'dil', activeDeckId: null },
 };
 
 function hasBridge(): boolean {
@@ -134,6 +144,40 @@ export default function App() {
     });
   };
 
+  const onGradeCard = (cardId: string, grade: ReviewGrade) => {
+    const now = new Date();
+    const today = isoDate(now);
+    setState((s) => {
+      if (!s) return s;
+      const card = s.learning.cards.find((c) => c.id === cardId);
+      if (!card) return s;
+      return {
+        ...s,
+        learning: {
+          ...s.learning,
+          cards: s.learning.cards.map((c) => (c.id === cardId ? gradeCard(c, grade, now) : c)),
+          reviewLog: { ...s.learning.reviewLog, [today]: (s.learning.reviewLog[today] ?? 0) + 1 },
+        },
+      };
+    });
+  };
+
+  const onAddGeneratedCards = (deckId: string, cards: { question: string; answer: string }[]) =>
+    setState((s) =>
+      s
+        ? {
+            ...s,
+            learning: {
+              ...s.learning,
+              cards: [
+                ...s.learning.cards,
+                ...cards.map((c) => newCard({ id: newId(), deckId, question: c.question, answer: c.answer })),
+              ],
+            },
+          }
+        : s,
+    );
+
   const onAddPhaseNote = (phaseId: string, text: string) =>
     update({
       planPhases: state.planPhases.map((p) => (p.id === phaseId ? { ...p, notes: [...p.notes, text] } : p)),
@@ -179,7 +223,24 @@ export default function App() {
             onAddNote={onAddPhaseNote}
           />
         )}
-        {tab === 'ogrenme' && <OgrenmeScreen />}
+        {tab === 'ogrenme' && (
+          <OgrenmeScreen
+            learning={state.learning}
+            aiEngine={state.aiEngine}
+            onSetTopic={(topic: LearningTopic) =>
+              update({
+                learning: {
+                  ...state.learning,
+                  activeTopic: topic,
+                  activeDeckId: state.learning.decks.find((d) => d.topic === topic)?.id ?? null,
+                },
+              })
+            }
+            onSetDeck={(deckId) => update({ learning: { ...state.learning, activeDeckId: deckId } })}
+            onGrade={onGradeCard}
+            onAddGeneratedCards={onAddGeneratedCards}
+          />
+        )}
       </div>
       {settingsOpen && (
         <SettingsModal settings={settings} onSave={onSaveSettings} onClose={() => setSettingsOpen(false)} />

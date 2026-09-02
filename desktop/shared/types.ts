@@ -58,6 +58,39 @@ export interface SavedResearchItem {
   createdAt: string;
 }
 
+export type LearningTopic = 'dil' | 'programlama';
+export type ReviewGrade = 'zor' | 'orta' | 'kolay';
+
+export interface LearningDeck {
+  id: string;
+  name: string;
+  topic: LearningTopic;
+}
+
+/** A flashcard with its SM-2 scheduling state. */
+export interface LearningCard {
+  id: string;
+  deckId: string;
+  question: string;
+  answer: string;
+  easeFactor: number;
+  intervalDays: number;
+  repetitions: number;
+  lapses: number;
+  /** ISO date (YYYY-MM-DD) this card is next due. */
+  due: string;
+  createdAt: string;
+}
+
+export interface LearningState {
+  decks: LearningDeck[];
+  cards: LearningCard[];
+  /** Reviews per ISO date, for the streak and the heatmap. */
+  reviewLog: Record<string, number>;
+  activeTopic: LearningTopic;
+  activeDeckId: string | null;
+}
+
 export interface MemoryFact {
   id: string;
   text: string;
@@ -88,6 +121,7 @@ export interface AppState {
   selectedPhaseId: string | null;
   memory: JarvisMemory;
   savedResearch: SavedResearchItem[];
+  learning: LearningState;
 }
 
 /** Settings as the renderer sees them — API keys themselves never leave the main process. */
@@ -130,6 +164,7 @@ export const STORE_CHANNELS = {
 
 export const AI_CHANNELS = {
   chat: 'ai:chat',
+  generateCards: 'ai:generateCards',
 } as const;
 
 export const SETTINGS_CHANNELS = {
@@ -142,6 +177,20 @@ export const RESEARCH_CHANNELS = {
   save: 'research:save',
   openExternal: 'research:openExternal',
 } as const;
+
+export interface GeneratedCard {
+  question: string;
+  answer: string;
+}
+
+export interface GenerateCardsRequest {
+  engine: AiEngine;
+  topic: LearningTopic;
+  subject: string;
+  count: number;
+}
+
+export type GenerateCardsResponse = { ok: true; cards: GeneratedCard[] } | { ok: false; error: string };
 
 export type SearchResponse = { ok: true; results: ResearchResult[]; notes: string[] } | { ok: false; error: string };
 

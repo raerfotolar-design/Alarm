@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'node:path';
 import { loadState, saveState } from './store';
 import { getPublicSettings, updateSettings } from './settings';
-import { handleChat } from './ai';
+import { handleChat, handleGenerateCards } from './ai';
 import { openExternal, saveResult, search } from './research';
 import { handleMediaProtocol, registerMediaScheme } from './mediaProtocol';
 import {
@@ -12,6 +12,7 @@ import {
   STORE_CHANNELS,
   type AppState,
   type ChatRequest,
+  type GenerateCardsRequest,
   type ResearchResult,
   type SettingsPatch,
 } from '../shared/types';
@@ -63,6 +64,10 @@ ipcMain.handle(SETTINGS_CHANNELS.set, async (_event, patch: SettingsPatch) => {
 
 ipcMain.handle(AI_CHANNELS.chat, async (_event, request: ChatRequest) => {
   return handleChat(request);
+});
+
+ipcMain.handle(AI_CHANNELS.generateCards, async (_event, request: GenerateCardsRequest) => {
+  return handleGenerateCards(request);
 });
 
 ipcMain.handle(RESEARCH_CHANNELS.search, async (_event, query: string) => {

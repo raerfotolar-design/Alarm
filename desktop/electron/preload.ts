@@ -7,6 +7,8 @@ import {
   type AppState,
   type ChatRequest,
   type ChatResponse,
+  type GenerateCardsRequest,
+  type GenerateCardsResponse,
   type PublicSettings,
   type ResearchResult,
   type SaveResponse,
@@ -20,6 +22,8 @@ contextBridge.exposeInMainWorld('jarvisDesktop', {
   getSettings: (): Promise<PublicSettings> => ipcRenderer.invoke(SETTINGS_CHANNELS.get),
   updateSettings: (patch: SettingsPatch): Promise<PublicSettings> => ipcRenderer.invoke(SETTINGS_CHANNELS.set, patch),
   sendChat: (request: ChatRequest): Promise<ChatResponse> => ipcRenderer.invoke(AI_CHANNELS.chat, request),
+  generateCards: (request: GenerateCardsRequest): Promise<GenerateCardsResponse> =>
+    ipcRenderer.invoke(AI_CHANNELS.generateCards, request),
   searchResearch: (query: string): Promise<SearchResponse> => ipcRenderer.invoke(RESEARCH_CHANNELS.search, query),
   saveResearch: (result: ResearchResult, phaseId: string | null): Promise<SaveResponse> =>
     ipcRenderer.invoke(RESEARCH_CHANNELS.save, result, phaseId),
