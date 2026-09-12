@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "Hikaye Evreni",
+    "slug": "hikaye-evreni",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "scheme": "hikayeevreni",
+    "backgroundColor": "#0F0B08",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.raer.hikayeevreni"
+    },
+    "android": {
+      "package": "com.raer.hikayeevreni",
+      "backgroundColor": "#0F0B08"
+    },
+    "web": {},
+    "extra": {
+      "eas": {
+        "projectId": ""
+      }
+    }
+  }
+}
