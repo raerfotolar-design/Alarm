@@ -48,7 +48,9 @@ export default function ChatScreen({ route, navigation }: Props) {
     let replyText: string;
     try {
       replyText = await sendStoryMessage({
-        apiKey: settings.geminiApiKey,
+        apiKey: settings.apiKey,
+        baseUrl: settings.baseUrl,
+        model: settings.model,
         story,
         joinMode: session.joinMode,
         joinPrompt: session.joinPrompt,

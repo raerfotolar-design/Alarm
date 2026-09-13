@@ -42,5 +42,8 @@ export interface StorySession {
 }
 
 export interface Settings {
-  geminiApiKey: string;
+  /** An OpenRouter (or any OpenAI-compatible) API key — see src/services/storyAiService.ts. */
+  apiKey: string;
+  baseUrl: string;
+  model: string;
 }

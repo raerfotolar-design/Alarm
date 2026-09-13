@@ -1,7 +1,4 @@
-import { GoogleGenAI, Content } from '@google/genai/web';
 import { ChatMessage, JoinMode, Story } from '../types';
-
-const MODEL = 'gemini-3.6-flash';
 
 const JOIN_MODE_LABEL: Record<JoinMode, string> = {
   existing_character: 'hikayede zaten var olan bir karakter olarak',
@@ -48,33 +45,52 @@ Görevin:
 ${CONTENT_BOUNDARY}`;
 }
 
-function historyToContents(history: ChatMessage[]): Content[] {
-  return history.map((m) => ({
-    role: m.role === 'user' ? 'user' : 'model',
-    parts: [{ text: m.text }],
-  }));
-}
-
+/**
+ * Talks to whatever model backs this app over the OpenAI-compatible chat-completions
+ * shape — the interface almost every open-source model server speaks (vLLM, TGI,
+ * Ollama's OpenAI-compatible endpoint, and every hosted-inference provider). Point
+ * `baseUrl` + `model` at your own fine-tuned model's server and nothing else in the
+ * app needs to change.
+ */
 export async function sendStoryMessage(params: {
   apiKey: string;
+  baseUrl: string;
+  model: string;
   story: Story;
   joinMode: JoinMode;
   joinPrompt: string;
   history: ChatMessage[];
   userText: string;
 }): Promise<string> {
-  if (!params.apiKey) {
-    return 'Henüz bir Gemini API anahtarı girmemişsin. Ayarlar bölümünden ekleyebilirsin.';
+  if (!params.baseUrl || !params.model) {
+    return 'Henüz bir model sunucusu ayarlanmamış. Ayarlar bölümünden adres ve model adını gir.';
   }
 
-  const ai = new GoogleGenAI({ apiKey: params.apiKey });
-  const contents: Content[] = [...historyToContents(params.history), { role: 'user', parts: [{ text: params.userText }] }];
+  const messages = [
+    { role: 'system', content: buildSystemInstruction(params.story, params.joinMode, params.joinPrompt) },
+    ...params.history.map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text })),
+    { role: 'user', content: params.userText },
+  ];
 
-  const response = await ai.models.generateContent({
-    model: MODEL,
-    contents,
-    config: { systemInstruction: buildSystemInstruction(params.story, params.joinMode, params.joinPrompt) },
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${params.baseUrl.replace(/\/$/, '')}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(params.apiKey ? { Authorization: `Bearer ${params.apiKey}` } : {}),
+      },
+      body: JSON.stringify({ model: params.model, messages }),
+    });
+  } catch {
+    return `Model sunucusuna (${params.baseUrl}) ulaşılamadı. Adres doğru mu, sunucu ayakta mı kontrol et.`;
+  }
 
-  return response.text ?? '...';
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    return `Model isteği başarısız oldu (HTTP ${res.status}). ${body.slice(0, 200)}`;
+  }
+
+  const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+  return data.choices?.[0]?.message?.content?.trim() || '...';
 }

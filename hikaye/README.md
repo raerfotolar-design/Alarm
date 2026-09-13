@@ -11,7 +11,12 @@ story of their own and role-play inside it with an AI, describing how they join
 - Publish toggle (local — see "What's missing" below)
 - Enter a published story: pick a join mode, describe yourself, chat with the AI inside
   the story's world; multiple "entries" (sessions) per story are kept separately
-- Gemini API key in Settings
+- AI backend: **bring your own model.** `src/services/storyAiService.ts` speaks the
+  OpenAI-compatible `/chat/completions` shape that vLLM, TGI, Ollama's OpenAI-compatible
+  endpoint, and every hosted-inference provider implement — so a self-hosted or
+  fine-tuned open-source model plugs in the same way a hosted one would. Set the
+  server address, model name, and (if the server needs one) an API key in Settings.
+  No model is bundled or trained here — that part is on you; this is just the wiring.
 
 ## Content policy (baked into the system prompt, `src/services/storyAiService.ts`)
 

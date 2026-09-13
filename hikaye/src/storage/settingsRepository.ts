@@ -1,7 +1,7 @@
 import { Settings } from '../types';
 import { getJson, setJson, STORAGE_KEYS } from './storage';
 
-const DEFAULTS: Settings = { geminiApiKey: '' };
+const DEFAULTS: Settings = { apiKey: '', baseUrl: '', model: '' };
 
 export async function getSettings(): Promise<Settings> {
   return getJson<Settings>(STORAGE_KEYS.settings, DEFAULTS);
