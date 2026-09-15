@@ -171,7 +171,7 @@ export default function StoryEditorScreen({ route, navigation }: Props) {
               />
               <PrimaryButton title="Hikayeyi Sil" variant="danger" onPress={removeStory} />
             </View>
-          ) : null
+          ) : undefined
         }
       />
     </ScreenContainer>
