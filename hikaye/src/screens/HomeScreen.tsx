@@ -23,9 +23,14 @@ export default function HomeScreen({ navigation }: Props) {
     <ScreenContainer>
       <View style={styles.header}>
         <ScreenTitle>Hikayelerim</ScreenTitle>
-        <Pressable onPress={() => navigation.navigate('Settings')} hitSlop={12}>
-          <Text style={styles.settingsLink}>Ayarlar</Text>
-        </Pressable>
+        <View style={{ flexDirection: 'row', gap: 16 }}>
+          <Pressable onPress={() => navigation.navigate('Bots')} hitSlop={12}>
+            <Text style={styles.settingsLink}>Karakterler</Text>
+          </Pressable>
+          <Pressable onPress={() => navigation.navigate('Settings')} hitSlop={12}>
+            <Text style={styles.settingsLink}>Ayarlar</Text>
+          </Pressable>
+        </View>
       </View>
 
       <FlatList

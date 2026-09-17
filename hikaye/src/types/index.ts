@@ -47,3 +47,29 @@ export interface Settings {
   baseUrl: string;
   model: string;
 }
+
+/**
+ * A user-created character/bot — the PolyBuzz-style "make your own character and
+ * chat with it" feature, distinct from writing a Story. Whatever the user writes
+ * here (personality, shortDescription) never overrides the content boundary baked
+ * into src/services/contentBoundary.ts — see src/services/botAiService.ts.
+ */
+export interface Bot {
+  id: string;
+  name: string;
+  avatarEmoji: string;
+  shortDescription: string;
+  personality: string;
+  greeting: string;
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BotSession {
+  id: string;
+  botId: string;
+  messages: ChatMessage[];
+  createdAt: string;
+  updatedAt: string;
+}

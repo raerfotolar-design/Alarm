@@ -8,6 +8,9 @@ export type RootStackParamList = {
   JoinPrompt: { storyId: string };
   Chat: { sessionId: string };
   Settings: undefined;
+  Bots: undefined;
+  BotEditor: { botId?: string };
+  BotChat: { botId: string };
 };
 
 export type { JoinMode };

@@ -10,6 +10,9 @@ import SessionsScreen from './src/screens/SessionsScreen';
 import JoinPromptScreen from './src/screens/JoinPromptScreen';
 import ChatScreen from './src/screens/ChatScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
+import BotsScreen from './src/screens/BotsScreen';
+import BotEditorScreen from './src/screens/BotEditorScreen';
+import BotChatScreen from './src/screens/BotChatScreen';
 import { RootStackParamList } from './src/navigation/types';
 import { theme } from './src/theme/theme';
 
@@ -46,6 +49,9 @@ export default function App() {
           <Stack.Screen name="JoinPrompt" component={JoinPromptScreen} options={{ title: 'Nasıl Gireceksin?' }} />
           <Stack.Screen name="Chat" component={ChatScreen} options={{ title: 'Hikaye' }} />
           <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Ayarlar' }} />
+          <Stack.Screen name="Bots" component={BotsScreen} options={{ title: 'Karakterlerim' }} />
+          <Stack.Screen name="BotEditor" component={BotEditorScreen} options={{ title: 'Karakter' }} />
+          <Stack.Screen name="BotChat" component={BotChatScreen} options={{ title: 'Karakter' }} />
         </Stack.Navigator>
         <StatusBar style="light" />
       </NavigationContainer>

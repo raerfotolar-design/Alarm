@@ -22,4 +22,6 @@ export const STORAGE_KEYS = {
   stories: 'hikaye.stories.v1',
   sessions: 'hikaye.sessions.v1',
   settings: 'hikaye.settings.v1',
+  bots: 'hikaye.bots.v1',
+  botSessions: 'hikaye.botSessions.v1',
 } as const;
